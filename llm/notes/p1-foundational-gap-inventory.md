@@ -1191,6 +1191,8 @@ Per CEO Q3 (ii), this entire mechanism is **retired in the fork** — single-ten
 ## §E — Architectural questions for spec phase (S1-S10)
 
 > **Status**: drafted by `fizzy-claude` from §C mapping work; expects Codex contributions and Gemini third-lens additions.
+>
+> **Note (post-Planning)**: Many Q-S items below have been answered in Planning rounds P3–P10. P10 is the final synthesis and contains the definitive “answered vs open vs deferred” registry: `llm/notes/p10-fork-posture-summary.md` §G.
 
 Each question follows this format:
 
@@ -1294,16 +1296,22 @@ The Spec rounds (S1–S10) must answer **every** question below before implement
 > **Q-S-011 — Schema migration cost: every Card FK changes from UUID to string.**
 > Every model with `card_id`. Migration is non-trivial and must be tested.
 > Candidates: (a) New columns `card_beads_id varchar(255)` alongside existing UUID, dual-write during cutover; (b) Big-bang migration changes types in one go.
+>
+> Tombstone / superseded: this is the same work item as Q-S-002a and was effectively answered in P3 (posture + impacted tables list): `llm/notes/p3-data-path-decision.md` §E.
 
 > **Q-S-018 — How is Fizzy's many-assignee model preserved when Beads has single `assignee`?**
 > Assignment (max 100), issues.assignee.
 > Candidates: (a) Beads `assignee` mirrors "primary" assignee; Fizzy keeps a `assignments` sidecar table FK'd to `issues.id` for the rest. (b) All assignees serialize into `issues.metadata.assignees: [...]`. (c) One assignee per card (lossy; reduces feature). **Recommendation**: (a).
+>
+> ANSWERED in P7: `llm/notes/p7-multi-assignee-tags-labels.md` §G.
 
 ### E.6 Tags / labels
 
 > **Q-S-017 — How do Fizzy `Tag` records sync with Beads `labels`?**
 > Tag, Tagging, Beads `labels` table.
 > Candidates: (a) Tag is a Fizzy-only display object whose name == Beads label string; tagging a card adds the label to the issue; deleting tag deletes the label. (b) Drop the Fizzy Tag table; labels are first-class strings only (loses Fizzy `Tag.title` normalization rules).
+>
+> ANSWERED in P7: `llm/notes/p7-multi-assignee-tags-labels.md` §G.
 
 ### E.7 Comments, mentions, reactions, steps
 
@@ -1320,24 +1328,34 @@ The Spec rounds (S1–S10) must answer **every** question below before implement
 > **Q-S-005 — How do Fizzy webhook events get triggered when state changes happen via `bd` CLI?**
 > Webhook, Webhook::Delivery, Beads `events`.
 > Candidates: (a) Beads `bd` post-commit hook calls back into Fizzy via internal HTTP to fire webhooks; (b) Fizzy polls Beads `events` table on a recurring job and emits webhooks for unseen entries; (c) Fizzy is the only writer to Beads (Q-S-001a option a), so webhooks fire from the Fizzy controller as today.
+>
+> ANSWERED in P8 (posture + requirements; bridging implementation deferred): `llm/notes/p8-events-sync.md` §H.
 
 > **Q-S-021 — Two-way Event log (Fizzy `events` ↔ Beads `events`): which is canonical?**
 > Event, Beads events table.
 > Candidates: (a) Beads is canonical for any task-data event; Fizzy events table is dropped or becomes a UI-only projection; (b) Fizzy events table mirrors Beads events for fast UI reads; (c) Fizzy keeps its own events for non-task domain actions (auth, account-lifecycle) and Beads owns task events.
+>
+> ANSWERED in P8: canonical = Beads events+comments: `llm/notes/p8-events-sync.md` §C.
 
 > **Q-S-022 — Do outbound HTTP webhooks survive in v1?**
 > Webhook, Webhook::Delivery. CEO Q6 deferred webhooks; this question confirms / re-confirms.
 > Recommendation: Drop in V1 (already deferred); pull from §C.
+>
+> DECIDED in P8/P10: webhooks as a concept remain, but **Beads-driven webhook bridging is deferred to v2+**. See `llm/notes/p8-events-sync.md` §E and `llm/notes/p10-fork-posture-summary.md` §E.
 
 ### E.9 Search
 
 > **Q-S-023 — How does search work — Fizzy 16-shard FTS, `bd search`, or hybrid?**
 > Search::Record, bd search, Filter.
 > Candidates: (a) Fizzy keeps the 16-shard FTS over a Fizzy projection table populated from Beads writes; (b) Fizzy delegates all search to `bd search` (and adds Fizzy-side terms via JOINs); (c) Hybrid by entity type.
+>
+> ANSWERED in P9: `llm/notes/p9-search-strategy.md` §A.
 
 > **Q-S-024 — How do Fizzy `Filter` queries execute against Beads?**
 > Filter and 6 join tables.
 > Candidates: (a) Adapter translates Filter to a `bd query` expression; (b) Adapter translates Filter to a Dolt SQL query (assumes Q-S-001 chose SQL access).
+>
+> ANSWERED in P9: filter executes against Fizzy Card mirror (no cross-DB joins): `llm/notes/p9-search-strategy.md` §B.
 
 ### E.10 Storage / attachments
 
@@ -1358,10 +1376,13 @@ The Spec rounds (S1–S10) must answer **every** question below before implement
 > **Q-S-006a — Does multi-user team / invites / roles / per-board access survive in V1?**
 > Account, Account::JoinCode, User (with `role` enum), Access (per-board ACL), Watch, Pin, Notification.
 > Distinction: single-tenant (one install) ≠ single-user (one human). The fork can still support a team within one install. CEO Q4a is silent on team — defaulting to "yes, team survives" until told otherwise.
+>
+> ANSWERED in P5: **YES**; User model intact: `llm/notes/p5-auth-bridging.md` §G.
 > Candidates: (a) Yes, team survives intact (recommendation); roles, invites, per-board access, notifications all in V1. (b) Drop multi-user — single-user single-install only (radical simplification; UX impact significant). (c) Hybrid: keep User+roles, drop per-board Access (everyone sees everything in v1).
 > **Recommendation**: (a). Surface to CEO if Codex/Gemini disagree.
 
 > **Q-S-007 — What is the export/import story for the fork?**
+> ANSWERED in P10 (posture): `llm/notes/p10-fork-posture-summary.md` §B.
 > Account::Export, Account::Import, ZipFile.
 > Candidates: (a) Use `bd export` / `bd import` JSONL only (Fizzy-side data is not exported); (b) Build a parallel Fizzy-side ZIP that bundles ActionText, ActiveStorage, etc.; (c) Defer to v2.
 
@@ -1370,6 +1391,7 @@ The Spec rounds (S1–S10) must answer **every** question below before implement
 > Candidates: (a) Beads holds plaintext (input), Fizzy ActionText holds HTML (rendering); when user edits in UI, both update; (b) Beads holds markdown (which renders both via Fizzy and via `bd`); (c) Beads holds plain text, Fizzy renders to HTML on read using a known transform.
 
 > **Q-S-027 — Backup strategy for the fork?**
+> ANSWERED in P10 (posture): `llm/notes/p10-fork-posture-summary.md` §C.
 > All Fizzy + all Beads.
 > Candidates: (a) `bd dolt push` for Beads + Git push for Fizzy code/skills/notes (current pattern, but `bd dolt push` is broken — needs plumbing fix); (b) Single tarball script that grabs both; (c) Defer.
 
