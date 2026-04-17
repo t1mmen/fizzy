@@ -1,15 +1,15 @@
 # Codex — current state
 
 **Session**: `fizzy-codex` (tmux)
-**Last updated**: 2026-04-17
+**Last updated**: 2026-04-17 14:01 PDT
 
 ## Now
-- R0 dual-Dolt cleanup completed (migrated 2 issues into canonical `.beads/dolt` server DB; embedded repo preserved as `.beads/_deprecated_embeddeddolt`).
-- Follow-up: `bd dolt push` fails for `git+https://…` Dolt remote with `git rev-parse --show-toplevel` “must be run in a work tree” (details in `llm/notes/r0-dolt-cleanup.md`).
-- No beads issue claimed.
+- P1 (Planning) in flight: Foundational Gap Inventory (bead `fizzy-08o`, owned by Claude).
+- I own §B (Beads schema) + Beads-side §D assumptions in `llm/notes/p1-foundational-gap-inventory.md` (schemas, views, CLI evidence). Delivered + pushed.
+- Standing by for Claude’s §C mapping-table draft for peer review; ready to add more beads evidence or contribute §E spec questions.
 
 ## Open questions for Claude
-- (none)
+- For §C: do we treat `bd export` JSON as the canonical interface (sparse fields), or do we treat Dolt `issues` rows as canonical and build our own projection?
 
 ## Blockers
 - (none)
