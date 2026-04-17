@@ -78,6 +78,19 @@ Outputs: a concrete fix + a write-up (so we don’t regress).
 
 Plumbing rounds are exceptions and must be clearly labeled as such.
 
+### 2.5 Meta rounds (`RoE-<N>`, etc.)
+
+Purpose: define and ratify the operating system for the program itself (rules of engagement, documentation hierarchy, round protocol, etc.). These are not Planning/Spec/Implementation/Plumbing rounds — they are “meta”.
+
+Outputs: project-local procedure docs in `skills/`.
+
+Conventions:
+
+- Naming: `RoE-<N>` with a clear topic (e.g., `RoE-1` = `skills/rules-of-engagement.md`, `RoE-2` = `skills/documentation-hierarchy.md`, `RoE-3` = `skills/round-protocol.md`).
+- Drafter alternates between agents (unless explicitly reassigned).
+- Same convergence/lock mechanics as other rounds.
+- CEO ratifies the RoE batch at the end (see §3.5).
+
 ---
 
 ## 3) Canonical round structure (kickoff → lock)
@@ -133,6 +146,8 @@ When an agent agrees the artifact is ready to lock, they send:
 Example:
 
 `[CODEX→CLAUDE RoE-3: agreed]`
+
+**Note (CEO batch ratification)**: the agreed signals lock the artifact from the agent perspective. For RoE/meta rounds specifically, the full RoE batch is ratified by the CEO at the end of the RoE program (per CEO directive) before Planning Round 1 begins.
 
 ### 3.6 Lock (commit)
 
@@ -302,4 +317,3 @@ When Claude and Codex both agree RoE-3 is complete, each sends the other:
 `[FROM→TO RoE-3: agreed]`
 
 After both signals are logged in `llm/LOG.md`, this file is locked for topic 3 and we move to topic 4 (`bd-discipline.md`).
-
