@@ -67,3 +67,11 @@ The sender ALSO appends the message to `llm/LOG.md` per the README protocol — 
 ## Failure mode log (so we don't repeat it)
 
 - **2026-04-17 ~12:27 PDT**: Claude sent skills-path question to fizzy-codex via Bash send-keys, parallelized with `LOG.md` edit, but did NOT schedule the follow-up `sleep 4 && send-keys Enter` call. Codex sat idle with `[Pasted Content 1385 chars]` in its input buffer for several minutes. Caught by Timm. Recovery: separate Enter call, verified `Working (3s)` appeared. Lesson encoded above.
+
+- **2026-04-17 ~13:50 PDT**: fizzy-codex sent `[RoE-7: agreed]` to fizzy-claude with a body containing escaped backticks (`\`skills/session-lifecycle.md\``) inside a double-quoted send-keys argument. The receiving zsh interpreted the backticks as command substitution and tried to execute the path → `zsh:1: permission denied: skills/session-lifecycle.md`. The send-keys call failed; Claude saw nothing arrive. Recovery: Codex retried without backticks and the message landed.
+
+  **Lesson — escape rules for tmux send-keys message bodies:**
+  - **Single quotes** around the message argument prevent ALL shell interpretation. Prefer them when the message contains no single quotes.
+  - **Double quotes** around the message argument allow `$VAR`, `` `cmd` ``, `\"`, and `\\` interpretation by the shell that runs `tmux send-keys`. Backticks in message bodies become command substitution and fail.
+  - If you must use double quotes, never put backticks in the body. Use single quotes around code paths or omit them entirely (skills/session-lifecycle.md reads fine without backticks in agent-to-agent prose).
+  - Default: use single quotes for the message body, period.
