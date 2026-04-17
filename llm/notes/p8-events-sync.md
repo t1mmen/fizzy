@@ -125,7 +125,7 @@ Consequence:
 
 ### D.1 Requirements
 
-TODO:
+Requirements:
 - No missed events (idempotent)
 - Resilient to restarts
 - Low operational complexity for single-tenant
@@ -201,7 +201,7 @@ V1 posture recommendation:
 
 ## §G — Failure modes + mitigations
 
-TODO list:
+Failure modes (mitigations TBD in spec round):
 - polling lag
 - duplicate events
 - cursor corruption
@@ -233,9 +233,9 @@ TODO list:
 
 ## §J — Validation checklist (pre-lock)
 
-- [ ] Ground truth extracted from Fizzy code for Event/Webhook models + delivery
-- [ ] Beads `events` DDL captured with example rows for common mutations
-- [ ] Canonical log decision made; consequences stated
-- [ ] Ingestion strategy concrete (cursor/idempotency/ordering)
-- [ ] Webhook V1 posture explicit; no “silent missing triggers”
-- [ ] Q-S-005/021/022 marked ANSWERED with pointers
+- [x] Ground truth extracted from Fizzy code for Event/Webhook models + delivery
+- [x] Beads `events` DDL captured with example rows for common mutations
+- [x] Canonical log decision made; consequences stated
+- [x] Ingestion strategy concrete (cursor/idempotency/ordering)
+- [x] Webhook V1 posture explicit; no “silent missing triggers”
+- [x] Q-S-005/021/022 marked ANSWERED with pointers
