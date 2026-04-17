@@ -26,10 +26,22 @@ However, the meaning of “Board.cards” changes:
 
 Concretely:
 
-- Each Board has a stable board-membership label, e.g. `board/<board_uuid>` (exact naming TBD in spec).
-- An issue is “on board X” iff it has label `board/<board_uuid>`.
+- Each Board has a stable **system board-membership label**, e.g. `fizzy/board/<board_uuid>`.
+- An issue is “on board X” iff it has that label for X.
 
 This aligns with CEO direction that Beads is source-of-truth for task data while keeping Fizzy’s board-centric UX intact.
+
+### A.4 Board membership cardinality (Q-S-039)
+
+**Decision (V1): enforce exactly-one-board membership per issue.**
+
+Even though labels *could* represent multi-board membership, upstream Fizzy is “one card belongs to one board”. V1 keeps that invariant to preserve the Fizzy mental model and avoid UI ambiguity (an issue cannot be simultaneously in two board workflows).
+
+Mechanically, the adapter will enforce:
+- The board-membership label namespace is exclusive (exactly one `fizzy/board/*` label per issue).
+- “Move issue to board Y” = remove existing `fizzy/board/*` label(s), then add `fizzy/board/<board_uuid>` for Y.
+
+Multi-board membership remains a v2+ decision if we ever explicitly choose to shift semantics.
 
 ### A.2 Why not “Board collapses into Filter”
 
@@ -45,6 +57,17 @@ Given P3’s posture, if board membership is stored only in Fizzy’s sidecar DB
 
 Beads already has a native label join table:
 - `labels(issue_id, label)` with an index on `label` (P1 §B DDL). This makes “board = label filter” efficient and conceptually aligned.
+
+### A.5 Board label namespace choice (Q-S-038)
+
+**Decision (V1): use `fizzy/board/<board_uuid>` as the canonical board-membership label namespace.**
+
+Rationale:
+- **Collision avoidance**: `fizzy/…` is a reserved/system prefix, less likely to collide with user labels.
+- **Rename safety**: UUID survives board renames; the label remains stable.
+- **Enforceability**: the adapter can reliably enforce “exactly one board label” by filtering on a reserved prefix.
+
+UI note: this system label should be **hidden from “user tags” UI** by default (or rendered as a non-editable board indicator), otherwise users can accidentally break invariants by editing it manually.
 
 ---
 
@@ -83,6 +106,19 @@ Evidence that custom statuses exist:
 V1 recommendation:
 - Start with default statuses (open/in_progress/blocked/deferred/closed).
 - Treat “custom statuses” as a v1.5 / v2 feature unless CEO demands richer workflows immediately.
+
+### B.4 V1 ships both Kanban + List views (Q-S-042)
+
+**Decision (V1): ship a List view alongside Kanban.**
+
+Rationale:
+- Kanban is excellent for drag/drop and visual scanning, but is mouse-heavy.
+- A List view is the **accessibility and keyboard-first anchor** (screen readers, quick navigation, bulk edits later).
+- This aligns with the community “multi-view projection” pattern (kanban primary, list secondary) and with CEO Q9 quality bar: match Fizzy’s accessibility standards.
+
+Scope:
+- V1 List view is the same board lens (membership label + status filters), rendered as a simple table/list with keyboard navigation.
+- Tree/graph remain v2+.
 
 ---
 
@@ -139,10 +175,15 @@ The following Beads-native fields exist in `issues` schema (P1 §B DDL) and shou
 
 ### D.1 Minimal V1 surface (must-have)
 
+Rationale: V1 must support “typical workflow” creation/editing of beads-native issues, and spec rounds require perfect-bead structure (acceptance criteria + design + notes) for downstream execution. Therefore these fields are must-have surfaces (at least in the detail view).
+
 | Beads field | Where it lives | V1 UI surface | Notes |
 |---|---|---|---|
 | `title` | `issues.title` | Card title + edit-in-place modal | Matches existing Fizzy card title concept |
 | `description` | `issues.description` | “Why” section in card detail | Current Fizzy uses rich-text description; we can render as plain text initially or keep rich-text in Fizzy sidecar (P6/P8 territory) |
+| `acceptance_criteria` | `issues.acceptance_criteria` | Dedicated “Acceptance criteria” section | Beads-native; aligns with spec-first workflow |
+| `design` | `issues.design` | Dedicated “Design” section | Keeps “how” explicit |
+| `notes` | `issues.notes` | Notes / scratchpad section | Captures ongoing context |
 | `status` | `issues.status` | Column + status dropdown | Drag-drop updates status via `bd update --status` |
 | `priority` (0-4) | `issues.priority` | Priority pill / dropdown (P0..P4) | Resolves goldness (see §G) |
 | `issue_type` | `issues.issue_type` | Type pill + filter | V1: show in card header; default `task` |
@@ -153,9 +194,6 @@ The following Beads-native fields exist in `issues` schema (P1 §B DDL) and shou
 
 | Beads field | V1 UI surface | Why |
 |---|---|---|
-| `acceptance_criteria` | Dedicated “Acceptance criteria” section | Beads-native; aligns with spec-first workflow |
-| `design` | Dedicated “Design” section | Keeps “how” explicit |
-| `notes` | Notes / scratchpad section | Captures ongoing context |
 | `estimated_minutes` | Estimate input | Supports planning/triage |
 | `assignee` | Single assignee picker | V1 supports single assignee even if Fizzy later adds sidecar multi-assign |
 | `due_at` | Due date | Useful workflow cue |
@@ -263,6 +301,9 @@ This doc answers the P1 questions and should be referenced from `llm/notes/p1-fo
 - **Q-S-029** — `issue_type` surfaced as type pill + filter in V1 card UI. (§D)
 - **Q-S-030** — Dependencies: v1 minimum = blocks/blocked_by + add/remove; recommended = surface all 10 types grouped. (§E)
 - **Q-S-031** — Hierarchy: v1 minimum = parent + children panel + progress summary; optional kanban badge. (§F)
+- **Q-S-039** — Board membership cardinality: V1 enforces exactly one board label per issue. (§A.4)
+- **Q-S-038** — Board label namespace: V1 uses `fizzy/board/<board_uuid>` reserved prefix. (§A.5)
+- **Q-S-042** — List view: V1 ships Kanban + List (List is accessibility anchor). (§B.4)
 
 ---
 
@@ -270,20 +311,11 @@ This doc answers the P1 questions and should be referenced from `llm/notes/p1-fo
 
 New or sharpened questions surfaced by this projection:
 
-> **Q-S-038 — What is the canonical board-membership label namespace?**
-> `board/<uuid>` vs `board:<slug>` vs `fizzy/board/<uuid>`. Needs to avoid collisions with user labels and survive renames.
-
-> **Q-S-039 — Do we support multi-board membership or enforce exactly one board label per issue?**
-> Fizzy upstream is single-board per card; labels allow many. Decide enforcement mechanism.
-
 > **Q-S-040 — How do we treat `status='pinned'` if it appears (overlay vs column)?**
 > Schema/views reference it; we should confirm how bd uses it in practice and define UI.
 
 > **Q-S-041 — Do we allow per-board custom status subsets, or is status-set global?**
 > If custom statuses are global but boards show subsets, “move between columns” can set status to a value not present in other boards. UX decisions needed.
-
-> **Q-S-042 — What is the “List view” complement to kanban in V1?**
-> Community strongly recommends multi-view (kanban primary, list secondary). Define list sorting/filtering baseline.
 
 ---
 

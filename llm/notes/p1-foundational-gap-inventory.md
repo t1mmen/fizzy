@@ -1225,6 +1225,7 @@ The Spec rounds (S1–S10) must answer **every** question below before implement
 ### E.2 UI projection (how the kanban shows beads)
 
 > **Q-S-003 — How does the kanban "board" + "column" concept project onto Beads?**
+> ANSWERED in P4: `llm/notes/p4-ui-projection-deep-dive.md` §H.
 > Board, Column, Card. Defines the v1 UI mapping.
 > Candidates:
 > - (a) Board = saved Filter (a Fizzy `Filter` row); Column = group-by Beads `status` value within that filter.
@@ -1232,22 +1233,28 @@ The Spec rounds (S1–S10) must answer **every** question below before implement
 > - (c) Hybrid: Board is Fizzy entity, Column is Fizzy entity, but each Card's column-membership is computed from Beads labels.
 
 > **Q-S-009 — Does "Board" survive as a first-class entity, or collapse into a saved Filter?**
+> ANSWERED in P4: `llm/notes/p4-ui-projection-deep-dive.md` §H.
 > Affects all Board/Column/Access tables. UX impact: how users discover and switch context.
 
 > **Q-S-010 — How does column position (drag-and-drop reorder) get stored?**
+> ANSWERED in P4: `llm/notes/p4-ui-projection-deep-dive.md` §H.
 > Beads has no per-card column-position. Candidates: (a) Fizzy keeps `cards.position` Fizzy-side; (b) Stuff position into `issues.metadata.fizzy_column_position`; (c) Compute from labels (lossy).
 
 > **Q-S-028 — How does Fizzy `Card::Goldness` interact with Beads `priority` (0-4)?**
+> ANSWERED in P4: `llm/notes/p4-ui-projection-deep-dive.md` §H.
 > Card, Card::Goldness, issues.priority. UX: do we surface beads priority as a UI field, hide goldness, or merge them?
 > Candidates: (a) Surface beads priority, drop goldness (cleaner); (b) Keep goldness as Fizzy-only badge, surface priority separately; (c) Map `golden=true` ↔ `priority=0` (P0).
 
 > **Q-S-029 — How does Fizzy surface Beads `issue_type` (task/bug/feature/epic/chore/decision)?**
+> ANSWERED in P4: `llm/notes/p4-ui-projection-deep-dive.md` §H.
 > Beads-native field new to Fizzy UI. Affects card-creation UI and filtering.
 
 > **Q-S-030 — Which of the 10 dependency types are visible in v1 UI?**
+> ANSWERED in P4: `llm/notes/p4-ui-projection-deep-dive.md` §H.
 > All of `dependencies` table. Recommendation: surface all 10 with grouping (hierarchy: blocks/parent-child; relations: tracks/related/relates-to; lifecycle: discovered-from/until/caused-by/validates/supersedes), but spec round confirms grouping.
 
 > **Q-S-031 — How does `issues.parent_id` (hierarchy) render in the kanban?**
+> ANSWERED in P4: `llm/notes/p4-ui-projection-deep-dive.md` §H.
 > Tree view? Indented children in a column? Collapsing parent? V1 may pick a minimal "show parent ↔ child link in detail view" without full tree UI; spec decides.
 
 ### E.3 Auth & identity bridging
