@@ -115,29 +115,42 @@ If empirical V1 testing shows >200ms, options: caching (Solid Cache layer over `
 
 ### C.1 The problem
 
-P3 routes all writes through `bd` CLI. Fizzy `Search::Record` is updated via AR `after_*_commit` callbacks on Card. With Card gone as an AR model (replaced by `Beads::Issue` which is `readonly?`), there are no AR callbacks to fire.
+P3 routes all writes through `bd` CLI. Fizzy `Search::Record` is updated via AR `after_*_commit` callbacks on `Card` and `Comment`. With Card now a Fizzy mirror of Beads (per §A.2), the callbacks survive — but their TRIGGER must be the poller updating Card from Beads, not direct user writes (which now flow through `bd` first).
+
+The poller has TWO mirroring jobs:
+1. Keep Card + Comment + sidecars (Closure, Tagging, etc.) in sync with Beads.
+2. As a side effect of those AR writes, Searchable callbacks fire and Search::Record updates.
 
 ### C.2 Decision
 
-**Reindex via the Beads → Fizzy ingestion poller (defined in P8 §D), but with a much tighter cadence (every 30s vs hourly for events).**
+**Reindex via the Beads → Fizzy ingestion poller (defined in P8 §D), but with a much tighter cadence (every 30s vs hourly for events) and broader scope (Card + Comment mirror updates, not just Search::Record).**
 
 Concretely:
-- The poller (deferred-but-designed in P8) becomes a real V1 component scoped to search reindex only (webhooks remain deferred).
+- The poller (deferred-but-designed in P8) becomes a real V1 component for **mirror-sync** (Card / Comment / Closure / Tagging mirror tables) — the Search::Record updates fall out for free via the existing Searchable AR callbacks.
 - On each tick (every 30s):
-  1. Query Beads `events` since last cursor for `event_type IN ('created', 'updated', 'closed', 'reopened', 'label_added', 'label_removed')` plus Beads `comments` since last cursor.
-  2. For each unseen event/comment: call `Search::Record.upsert!` for the affected issue.
-  3. Advance cursor (with the same lookback-window pattern from P8 §D.3 for safety).
-- For `event_type = 'closed'` AND we don't index closed issues by default: call `Search::Record.find_by(...).destroy` for that issue.
+  1. Query Beads `events` since last cursor for `event_type IN ('created', 'updated', 'closed', 'reopened', 'label_added', 'label_removed', 'status_changed')` plus Beads `comments` since last cursor.
+  2. For each unseen event:
+     - `created` → `Card.create!(id: <beads-id>, ...)` (AR triggers `Searchable#create_in_search_index`)
+     - `updated` / `status_changed` → `Card.find(<beads-id>).update!(...)` (AR triggers `update_in_search_index`)
+     - `closed` → `Card.find(<beads-id>).update!(status: 'closed', closed_at: ...)` AND `Closure.create!(card: <card>, user: <resolved from event.actor>)` mirror; AR fires update callback (see §C.3 for closed-search policy)
+     - `reopened` → reverse: clear `Closure`, update Card status
+     - `label_added` / `label_removed` → upsert Tagging row, mirror Beads label string into Fizzy Tag (find or create)
+  3. For each unseen Beads comment: `Comment.create!(card: <card>, body: ..., creator: <resolved from event.actor>)`
+  4. Advance cursor (with the lookback-window pattern from P8 §D.3 for safety).
 
-### C.3 V1 freshness guarantee
+### C.3 Closed-search policy
 
-- "Last 30 seconds of writes may not appear in Fizzy search."
+**Search::Record stays for closed cards** (do NOT destroy on close). Default UI search filter excludes closed; user can opt in via "include closed" toggle (matches upstream Fizzy behavior). Keeping closed indexed preserves "find that closed bug from 6 months ago" — a real workflow.
+
+### C.4 V1 freshness guarantee
+
+- "Last 30 seconds of writes may not appear in Fizzy search OR in Fizzy UI Card listing."
 - Acceptable for typical kanban use; documented in user-facing release notes.
-- Power users can fall back to `bd search` for strict-current results.
+- Power users can fall back to `bd search` for strict-current results (no projection lag).
 
-### C.4 Bootstrap / backfill
+### C.5 Bootstrap / backfill
 
-On first install setup (or any fresh-clone run): the poller does a full backfill scan of all Beads issues + comments to populate `Search::Record`. One-time cost; spec round S-search-bootstrap owns the implementation.
+On first install setup (or any fresh-clone run): the poller does a full backfill scan of all Beads issues + comments to populate `Card` + `Comment` mirror tables (which then triggers `Search::Record` population via callbacks). One-time cost; spec round S-search-bootstrap owns the implementation.
 
 ---
 
