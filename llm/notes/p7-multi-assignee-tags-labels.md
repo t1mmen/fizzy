@@ -152,25 +152,34 @@ If existing Beads data (e.g., from a hard-fork starting state) contains labels t
 
 ## §D — Tag normalization (apply to Beads writes)
 
-### D.1 Ground truth
+### D.1 Ground truth (corrected per Codex empirical check)
 
-`Tag` model normalizes:
-- Lowercase
-- Strip leading `#`
-- (Probably also strip whitespace — Spec round verifies the exact rules)
+`Tag` model in `app/models/tag.rb`:
+- Normalizes title to lowercase (downcase)
+- **REJECTS** titles with a leading `#` via validation (does NOT strip them silently)
+- May also strip surrounding whitespace — Spec round verifies the exact rules
 
 ### D.2 Decision
 
-**Apply the same Tag normalization rules to every Beads label write that flows through the Fizzy adapter.**
+**Apply Fizzy's existing strict Tag rules to every Beads label write that flows through the Fizzy adapter.** That means: lowercase, REJECT leading `#` (raise/return error rather than silently stripping), strip surrounding whitespace.
 
 ```ruby
-# In Fizzy::Beads::CommandClient or helper:
-def normalize_label(raw)
-  raw.to_s.strip.downcase.sub(/\A#/, "")
+# In lib/fizzy/beads/label_normalizer.rb:
+module Fizzy::Beads::LabelNormalizer
+  def self.call(raw)
+    s = raw.to_s.strip.downcase
+    raise ArgumentError, "label cannot start with #" if s.start_with?("#")
+    s
+  end
 end
 ```
 
-Every `add_label` / `remove_label` call passes the normalized form. This prevents `#Foo` / `Foo` / `foo` from becoming three separate Beads labels.
+Every `add_label` / `remove_label` call passes through this normalizer. This matches upstream Fizzy Tag semantics exactly — no leniency in the fork.
+
+**Why strict (reject) over lenient (strip)**:
+- Match upstream Fizzy behavior — fewer surprises for contributors familiar with upstream.
+- Forces user-visible error rather than silently mutating their input.
+- Easier to relax later (strip) than tighten (reject) without breaking workflows.
 
 ### D.3 Why this is non-negotiable
 
