@@ -44,11 +44,11 @@ Concretely:
 When primary assignee changes (because the primary user was removed, or admin promoted a different assignee):
 1. Fizzy writes the new primary to `assignments` (or marks the new primary).
 2. Adapter calls `Beads::IssueRepository.set_assignee(issue_id, new_primary_email, actor:)`.
-3. Repository invokes `bd update <issue_id> --assignee <email> --actor <writer_email>`.
+3. Repository invokes `bd --actor <writer_email> update <issue_id> --assignee <email>`. **Note**: `--actor` is a GLOBAL bd flag (per `bd --help`), placed BEFORE the subcommand, not after.
 4. Beads `events.actor` records the writer (per P5).
 
 When all assignees removed:
-- Beads `assignee` cleared (`bd update <id> --assignee ""`).
+- Beads `assignee` cleared: `bd --actor <writer_email> update <id> --assignee ""`.
 
 ### A.5 "My issues" query semantics
 
