@@ -72,19 +72,19 @@ Concretely:
 
 ### B.2 Decision
 
-**Adopt option (a) from P1 §E.9: the Filter compiles to an AR query against the `Beads::Issue` model (via Trilogy SQL — P3) plus Fizzy sidecar tables (assignments, etc.). It does NOT call `bd query`.**
+**Adopt option (a) from P1 §E.9: the Filter compiles to an AR query against the `Card` mirror table (Fizzy MySQL — see §A.2) plus existing Fizzy sidecar joins. NO cross-DB joins to Beads. NO `bd query` shell-out. Beads-native dimensions (labels, dep counts) get mirrored into Card-side columns or sidecar tables maintained by the poller (see §C).**
 
 Concretely:
-- `Filter#cards` is rewired to join `Beads::Issue` (the AR model from P3 §D) with Fizzy sidecars (Assignment for assignees, etc.).
-- Each Filter dimension translates to a SQL clause:
-  - `assignees` → join Fizzy `assignments` ON `card_id = beads_issue.id` WHERE assignee_id IN (...)
-  - `boards` → join Beads `labels` ON `issue_id = beads_issue.id` WHERE label IN ('fizzy/board/<uuid>', ...)
-  - `tags` → join Beads `labels` WHERE label IN (tag titles)
-  - `closers` → use Beads `events` (canonical events log per P8 §C) — needs a sub-query
-  - `creators` / `creation_window` / `closure_window` → direct Beads `issues` columns (`created_by`, `created_at`, `closed_at`)
-  - `mentioning(term)` → JOIN to `Search::Record` shard for the term, intersect with the rest
-  - `column_id` → resolves to label/status filter (P4: column = derived from status + board label)
-- All within a single Trilogy connection; no `bd` shell-out per filter eval.
+- `Filter#cards` keeps essentially its current shape: `creator.accessible_cards.preloaded.published.where(...)` etc. — except the AR scopes now resolve against the Card MIRROR table (§A.2), not the upstream-Fizzy authoritative `cards`.
+- Each Filter dimension translates to a SQL clause within the Fizzy MySQL connection:
+  - `assignees` → join Fizzy `assignments` ON `card_id = cards.id` WHERE assignee_id IN (...) (sidecar stays Fizzy-native; FK type changed per P3 §E)
+  - `boards` → join `taggings`/`tags` Fizzy-side, where board membership is mirrored via Beads label sync (the poller writes `taggings` rows to mirror Beads `labels` matching `fizzy/board/<uuid>`)
+  - `tags` → join `taggings`/`tags` (also mirrored from Beads `labels` by the poller)
+  - `closers` → Fizzy `closures` table (mirror of Beads close events; see §C reindex)
+  - `creators` / `creation_window` / `closure_window` → direct Card mirror columns (mirrored from Beads `issues.created_by`, `created_at`, `closed_at`)
+  - `mentioning(term)` → JOIN to `Search::Record` shard for the term, intersect with the rest (Search::Record stays as-is; populated from Card/Comment AR callbacks driven by the poller)
+  - `column_id` → resolves to status (Card.status mirrored from Beads) + board label (P4)
+- All within ONE Fizzy connection. No cross-DB. No bd shell-out per filter eval.
 
 ### B.3 Why not (b) translate to `bd query` DSL
 
@@ -93,13 +93,19 @@ Concretely:
 - Per-filter shell-out cost is unacceptable for kanban refresh patterns.
 - Two-target compilation (sometimes SQL, sometimes bd) doubles the testing burden.
 
+### B.3a Why NOT cross-DB joins (Beads::Issue ⋈ Fizzy sidecars)
+
+Original v1 of this doc proposed joining the Beads::Issue AR model (Dolt connection) with Fizzy sidecars in a single SQL query. **This is impossible — Rails cannot join across two different database connections in one SQL statement.** The mirror-via-poller approach (§A.2 + §C) is the canonical fix: keep all join targets in the Fizzy DB, populated from Beads via the poller.
+
+If for some advanced query we need a cross-DB intersection (e.g., "issues with bead-native dep type X AND Fizzy custom field Y"), we use the 2-phase intersect pattern: query Beads for issue_ids matching bead-native dims, then `Card.where(id: those_ids).joins(...).where(fizzy_dims)`. Spec round S-cross-db-intersect owns the helper.
+
 ### B.4 Performance budget
 
 V1 target: a Filter eval (typical: 1 board + 2 tags + assignment scope) returns within **<200ms** for typical kanban view (~50-200 issues). Achievable because:
-- Trilogy SQL connection-pooled; no per-query fork.
-- Beads `issues` table has indexes on `status`, `priority`, `assignee` (P1 §B DDL).
-- Beads `labels` has index on `label`.
-- Fizzy `Search::Record` has FTS index on `(account_key, content, title)`.
+- All joins are Fizzy MySQL (Trilogy)-side; no fork, no cross-DB.
+- Card mirror has indexes on `status`, `account_id`, `board_id`, etc. (preserves upstream indexes).
+- `Search::Record` has FTS index on `(account_key, content, title)`.
+- The poller updates Card mirror eagerly so cards reflect recent state within the freshness budget.
 
 If empirical V1 testing shows >200ms, options: caching (Solid Cache layer over `Filter#cards.to_sql.hash`), denormalization (e.g., precomputed `card_label_set` column), or pagination tightening.
 
