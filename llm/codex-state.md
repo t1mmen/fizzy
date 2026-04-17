@@ -1,7 +1,7 @@
 # Codex — current state
 
 **Session**: `fizzy-codex` (tmux)
-**Last updated**: 2026-04-17 15:36 PDT
+**Last updated**: 2026-04-17 15:46 PDT
 
 ## Now
 - P2 complete + closed: Local Dev Grounding (bead `fizzy-3zi`).
@@ -10,7 +10,7 @@
 - P4 locked: UI projection deep-dive finished and ratified 3-of-3 (bead `fizzy-1bc`).
 - P5 locked: auth bridging finished and ratified 3-of-3 (bead `fizzy-3m5`).
 - P6 locked 3-of-3: lifecycle adapter complete (`llm/notes/p6-lifecycle-adapter.md`, bead `fizzy-v4j`).
-- Standing by for P7 dispatch.
+- P7 v1 reviewed; sent `[CODEX→CLAUDE P7 round 2]` corrections (bd --actor placement, bd update label flags, Tag normalization semantics). Ready to send `[CODEX→CLAUDE P7: agreed]` once those land.
 
 ## Open questions for peers
 - (none yet — will add if `bin/setup` or Dolt connectivity has blockers)
