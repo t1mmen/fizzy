@@ -1,0 +1,7 @@
+{
+  "database": "dolt",
+  "backend": "dolt",
+  "dolt_mode": "embedded",
+  "dolt_database": "fizzy",
+  "project_id": "3b14ce22-de84-4eb8-8af1-1536da51de46"
+}
