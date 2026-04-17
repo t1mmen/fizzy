@@ -157,9 +157,23 @@ On first install setup (or any fresh-clone run): the poller does a full backfill
 ## §D — Adapter shape (Search vs Filter)
 
 ```ruby
-# app/models/concerns/searchable.rb (modified — callbacks rewired)
-# Old: hooked into Card AR lifecycle.
-# New: called by Beads::Reindexer (the poller from §C).
+# app/models/concerns/searchable.rb (UNCHANGED from upstream)
+# Card and Comment AR keep their after_*_commit callbacks.
+# The TRIGGER for those callbacks is now the poller updating Card/Comment
+# from Beads (not direct user controllers — those go through bd CLI first).
+
+# app/models/card.rb (changed: now a mirror of Beads issues)
+# - cards.id is varchar(255) matching Beads issue id (per P3 §E migration)
+# - All upstream Card behaviour stays (associations, scopes, callbacks)
+# - The poller (below) writes to Card based on Beads events
+# - User-initiated writes go: controller → CommandClient (bd CLI) → Beads → poller → Card update
+class Card < ApplicationRecord
+  # Searchable, scopes, associations: all unchanged from upstream
+  # New: a class method to upsert from a Beads issue snapshot
+  def self.upsert_from_beads(beads_issue)
+    upsert!({ id: beads_issue.id, title: beads_issue.title, status: beads_issue.status, ... })
+  end
+end
 
 # app/jobs/beads/reindex_job.rb (new)
 class Beads::ReindexJob < ApplicationJob
@@ -183,33 +197,32 @@ module Fizzy::Beads::Reindexer
   private
 
   def self.process_event(event)
+    beads_issue = Beads::Issue.find(event.issue_id)
     case event.event_type
-    when "created", "updated", "label_added", "label_removed", "reopened"
-      Search::Record.upsert_for_issue(event.issue_id)
+    when "created", "updated", "status_changed", "reopened"
+      Card.upsert_from_beads(beads_issue)
+      # Searchable AR callbacks fire downstream and update Search::Record
+    when "label_added"
+      sync_taggings_for_issue(beads_issue)
+    when "label_removed"
+      sync_taggings_for_issue(beads_issue)
     when "closed"
-      Search::Record.remove_for_issue(event.issue_id)
+      Card.upsert_from_beads(beads_issue)
+      Closure.find_or_create_by(card_id: beads_issue.id) { |c| c.user = resolve_actor(event.actor) }
     end
   end
 
-  def self.process_comment(comment)
-    Search::Record.upsert_for_comment(comment)
+  def self.process_comment(beads_comment)
+    Comment.upsert!({ id: beads_comment.id, card_id: beads_comment.issue_id, body: beads_comment.text, creator_id: resolve_actor(beads_comment.author).id, ... })
+    # Comment Searchable callback fires; Search::Record updates
   end
 end
 
-# app/models/filter.rb (modified — #cards rewired)
-class Filter < ApplicationRecord
-  def cards
-    @cards ||= begin
-      # OLD: result = creator.accessible_cards.preloaded.published
-      # NEW: result = Beads::Issue.accessible_to(creator)
-      #              .joins(...)  # sidecar joins + Beads label joins
-      #              .where(...)  # per dimension
-      #              .order(sorted_by)
-      # ... rest similar but querying through Beads::Issue
-    end
-  end
-end
+# app/models/filter.rb (UNCHANGED from upstream — already queries Card via accessible_cards)
+# The Card it queries is now a mirror of Beads, but the AR shape and joins are identical.
 ```
+
+Adapter shape note: `Beads::Issue` (P3 §D, on `:beads` Trilogy connection) is used by the poller and by direct-Beads-query code paths (e.g., dependency graph rendering). Card AR (Fizzy MySQL connection) is what Filter / Search / Notification all join with.
 
 ---
 
