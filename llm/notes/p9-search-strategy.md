@@ -133,16 +133,18 @@ The poller has TWO mirroring jobs:
 
 Concretely:
 - The poller (deferred-but-designed in P8) becomes a real V1 component for **mirror-sync** (Card / Comment / Closure / Tagging mirror tables) — the Search::Record updates fall out for free via the existing Searchable AR callbacks.
-- On each tick (every 30s):
+- On each tick (every 30s) — **all writes use callback-bypass `upsert_all` + EXPLICIT `Search::Record` upserts; NEVER `create!`/`update!`** (per §A.2 doctrine):
   1. Query Beads `events` since last cursor for `event_type IN ('created', 'updated', 'closed', 'reopened', 'label_added', 'label_removed', 'status_changed')` plus Beads `comments` since last cursor.
   2. For each unseen event:
-     - `created` → `Card.create!(id: <beads-id>, ...)` (AR triggers `Searchable#create_in_search_index`)
-     - `updated` / `status_changed` → `Card.find(<beads-id>).update!(...)` (AR triggers `update_in_search_index`)
-     - `closed` → `Card.find(<beads-id>).update!(status: 'closed', closed_at: ...)` AND `Closure.create!(card: <card>, user: <resolved from event.actor>)` mirror; AR fires update callback (see §C.3 for closed-search policy)
-     - `reopened` → reverse: clear `Closure`, update Card status
-     - `label_added` / `label_removed` → upsert Tagging row, mirror Beads label string into Fizzy Tag (find or create)
-  3. For each unseen Beads comment: `Comment.create!(card: <card>, body: ..., creator: <resolved from event.actor>)`
+     - `created` → `Card.upsert_all([{ id: <beads-id>, beads_status: <status>, status: 'published', title, last_active_at, ... }], unique_by: :id)` + `Search::Record.upsert_for_issue(<beads-id>)`
+     - `updated` / `status_changed` → `Card.upsert_all([...], unique_by: :id)` + `Search::Record.upsert_for_issue(<beads-id>)`
+     - `closed` → `Card.upsert_all([{ id, beads_status: 'closed', last_active_at, ... }], unique_by: :id)` + `Closure.upsert_all([{ card_id, user_id: resolve_actor(event.actor)&.id }], unique_by: :card_id)` + `Search::Record.upsert_for_issue(<beads-id>)` (closed cards stay indexed per §C.3)
+     - `reopened` → reverse: `Closure.where(card_id: <id>).delete_all` + `Card.upsert_all` with new `beads_status` + explicit Search update
+     - `label_added` / `label_removed` → `Tagging.upsert_all([...], unique_by: ...)` + Tag find-or-create via `Tag.upsert_all` if needed; explicit Search update
+  3. For each unseen Beads comment: `Comment.upsert_all([{ id, card_id, creator_id: resolve_actor(...).id, ... }], unique_by: :id)` + `Search::Record.upsert_for_comment(<comment-id>)` (rich-text body mirror via separate ActionText insert; spec round S-comment-mirror owns)
   4. Advance cursor (with the lookback-window pattern from P8 §D.3 for safety).
+
+**Why no `create!`/`update!` anywhere**: those AR methods fire `after_*_commit` callbacks for Eventable, Mentions, Watchable, Notifiable. The poller is replaying Beads events; firing those callbacks would emit DUPLICATE Fizzy events, system comments, webhook deliveries, and notification spam. `upsert_all`/`update_columns`/`delete_all` skip callbacks; we explicitly trigger only the Search::Record sync we want.
 
 ### C.3 Closed-search policy
 
