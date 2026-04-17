@@ -249,7 +249,21 @@ Draft a perfect bead that specifies how Fizzy’s Card CRUD will be driven by Be
 
 ---
 
-## 5) Convergence signal (RoE-5)
+## 5) Failure modes (what NOT to do)
+
+- ❌ Skipping any required section in the brief or signoff. "Always filled" means always — even `none` is required text. Empty omission is ambiguous.
+- ❌ Vague acceptance criteria: "make it work", "convert all pages", "improve performance". AC must be file-grounded and verifiable.
+- ❌ Starting meaningful work before the brief is written. The brief *defines* the round; no brief = no round.
+- ❌ Closing a round/bead without a signoff. The signoff is the audit trail.
+- ❌ Inline scope creep — adding to AC mid-round without re-AC'ing per `skills/round-protocol.md` §10.3. New work spawns a new round/bead.
+- ❌ Duplicating signoff content across both a bead and a `llm/notes/<id>-signoff.md` file. Pick one canonical home per §3.2.
+- ❌ "Worked-on-my-machine" handoffs — `Operator-verification` commands must be specified for any check the worker cannot run themselves.
+- ❌ Briefs without sources-of-truth anchors. Every brief anchors to `path:line`, bead id, or spec doc.
+- ❌ Treating the templates as optional / paraphrasing the section names. Use the exact headings so reviewers can scan consistently.
+
+---
+
+## 6) Convergence signal (RoE-5)
 
 When all active agents agree RoE-5 is complete, each sends the others:
 
