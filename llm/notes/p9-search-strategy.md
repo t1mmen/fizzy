@@ -251,7 +251,7 @@ Adapter shape note: `Beads::Issue` (P3 §D, on `:beads` Trilogy connection) is u
 ## §E — Resolved Q-S items (links back to P1)
 
 - **Q-S-023 — How does search work — Fizzy 16-shard FTS, `bd search`, or hybrid?** → ANSWERED. Hybrid (option (c)): Fizzy 16-shard FTS over a Beads-mirrored projection drives UI search; `bd search` complements for CLI + power-user. See §A.
-- **Q-S-024 — How do Fizzy `Filter` queries execute against Beads?** → ANSWERED. Option (a): Filter compiles to AR/SQL queries against `Beads::Issue` + Fizzy sidecar joins via Trilogy connection. No `bd query` shell-out. See §B.
+- **Q-S-024 — How do Fizzy `Filter` queries execute against Beads?** → ANSWERED. Option (a): Filter compiles to AR/SQL queries against the `Card` MIRROR table (Fizzy MySQL) + existing Fizzy sidecar joins. **No cross-DB joins** (Rails cannot join Beads/Dolt with Fizzy/MySQL in one statement; Card mirror exists in Fizzy MySQL and is populated by the poller from Beads). No `bd query` shell-out. See §A.2, §B, §B.3a.
 
 A subsequent edit to `p1-foundational-gap-inventory.md` will mark these ANSWERED with a backlink.
 
