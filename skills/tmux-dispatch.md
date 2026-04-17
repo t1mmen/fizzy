@@ -75,3 +75,12 @@ The sender ALSO appends the message to `llm/LOG.md` per the README protocol — 
   - **Double quotes** around the message argument allow `$VAR`, `` `cmd` ``, `\"`, and `\\` interpretation by the shell that runs `tmux send-keys`. Backticks in message bodies become command substitution and fail.
   - If you must use double quotes, never put backticks in the body. Use single quotes around code paths or omit them entirely (skills/session-lifecycle.md reads fine without backticks in agent-to-agent prose).
   - Default: use single quotes for the message body, period.
+
+- **2026-04-17 ~14:30 PDT**: fizzy-claude sent a P1 dispatch to fizzy-gemini whose body contained the substring `single-tenant!=single-user`. The exclamation mark triggered Gemini's **shell-mode toggle** — Gemini's prompt parser saw `!` as the shell-mode prefix, switched to shell mode, and pasted the rest of the message body into `bash -c '...'`, which then errored on unbalanced parens (`syntax error near unexpected token ')'`). Recovery: send `Escape` to fizzy-gemini to exit shell mode, rephrase the message without `!` (use `is NOT` / `is not the same as` instead of `!=`), resend.
+
+  **Lesson — character triggers in receiver TUIs:**
+  - Different agent TUIs have different reserved-character behaviors. Gemini in particular treats `!` as shell-mode trigger.
+  - **Avoid in messages to Gemini**: `!`, `!=`, `! ` (space-after-bang). Spell it out: "is not", "does not equal", "differs from".
+  - **Avoid in messages to Codex**: backticks (see prior failure mode).
+  - **Avoid in messages to Claude**: (none confirmed yet — this section grows as new failure modes are discovered).
+  - **Verification step**: after the 3-call protocol, the capture should show a `Thinking` / `Working` / `Reviewing` indicator AND a normal-mode prompt (`*`/`>`/`›`), NOT `!` (Gemini shell mode), NOT `[Pasted Content N chars]` lingering (Codex stuck paste), NOT a syntax-error block.
