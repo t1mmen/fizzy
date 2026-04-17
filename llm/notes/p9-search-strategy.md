@@ -170,15 +170,15 @@ On first install setup (or any fresh-clone run): the poller does a full backfill
 
 # app/models/card.rb (changed: now a mirror of Beads issues)
 # - cards.id is varchar(255) matching Beads issue id (per P3 §E migration)
-# - All upstream Card behaviour stays (associations, scopes, callbacks)
-# - The poller (below) writes to Card based on Beads events
-# - User-initiated writes go: controller → CommandClient (bd CLI) → Beads → poller → Card update
+# - cards.beads_status NEW string column mirrors Beads issues.status; cards.status enum stays {drafted, published} (always 'published' for mirror)
+# - All upstream Card concerns/scopes/associations stay
+# - The poller writes to Card via callback-bypassing AR methods (upsert_all/update_columns); see Beads::Reindexer above
+# - User-initiated writes still go through controllers but flow: controller → CommandClient (bd CLI) → Beads → poller → Card upsert (callback-bypass)
 class Card < ApplicationRecord
   # Searchable, scopes, associations: all unchanged from upstream
-  # New: a class method to upsert from a Beads issue snapshot
-  def self.upsert_from_beads(beads_issue)
-    upsert!({ id: beads_issue.id, title: beads_issue.title, status: beads_issue.status, ... })
-  end
+  # NOTE: do NOT add a #upsert_from_beads(beads_issue) method that triggers `update!` —
+  # that fires Eventable/Mentions/Watchable callbacks. Use AR's upsert_all in the
+  # poller (Beads::Reindexer above) and explicitly trigger Search::Record updates.
 end
 
 # app/jobs/beads/reindex_job.rb (new)
@@ -206,21 +206,37 @@ module Fizzy::Beads::Reindexer
     beads_issue = Beads::Issue.find(event.issue_id)
     case event.event_type
     when "created", "updated", "status_changed", "reopened"
-      Card.upsert_from_beads(beads_issue)
-      # Searchable AR callbacks fire downstream and update Search::Record
+      # CRITICAL: callback-bypassing write. AR upsert_all skips after_*_commit hooks
+      # (Eventable, Mentions, Watchable, Searchable). Then explicit Search::Record sync.
+      Card.upsert_all([{
+        id: beads_issue.id,
+        title: beads_issue.title,
+        beads_status: beads_issue.status,
+        status: 'published',  # Always published for mirror; see §A.2 status disambiguation
+        last_active_at: beads_issue.updated_at,
+        # ... other mirror columns
+      }], unique_by: :id)
+      Search::Record.upsert_for_issue(beads_issue.id)  # Explicit; bypasses Searchable callback
     when "label_added"
-      sync_taggings_for_issue(beads_issue)
+      sync_taggings_for_issue(beads_issue)  # Same callback-bypass pattern
     when "label_removed"
       sync_taggings_for_issue(beads_issue)
     when "closed"
-      Card.upsert_from_beads(beads_issue)
-      Closure.find_or_create_by(card_id: beads_issue.id) { |c| c.user = resolve_actor(event.actor) }
+      Card.upsert_all([{ id: beads_issue.id, beads_status: 'closed', last_active_at: beads_issue.updated_at }], unique_by: :id)
+      Closure.upsert_all([{ card_id: beads_issue.id, user_id: resolve_actor(event.actor)&.id }], unique_by: :card_id)
+      Search::Record.upsert_for_issue(beads_issue.id)  # Closed cards stay indexed per §C.3
     end
   end
 
   def self.process_comment(beads_comment)
-    Comment.upsert!({ id: beads_comment.id, card_id: beads_comment.issue_id, body: beads_comment.text, creator_id: resolve_actor(beads_comment.author).id, ... })
-    # Comment Searchable callback fires; Search::Record updates
+    Comment.upsert_all([{
+      id: beads_comment.id,
+      card_id: beads_comment.issue_id,
+      creator_id: resolve_actor(beads_comment.author)&.id,
+      # body is rich-text-via-ActionText; needs separate ActionText::RichText insert.
+      # Spec round S-comment-mirror owns the rich-text mirror complexity.
+    }], unique_by: :id)
+    Search::Record.upsert_for_comment(beads_comment.id)  # Explicit; bypasses Searchable callback
   end
 end
 
