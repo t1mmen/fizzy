@@ -42,7 +42,7 @@ Always start by reading the latest collaboration history and current state:
 tail -n 100 llm/LOG.md
 cat llm/claude-state.md
 cat llm/codex-state.md
-cat llm/gemini-state.md  # if present
+cat llm/gemini-state.md
 ```
 
 If you are resuming after compaction, treat `llm/LOG.md` as authoritative.
@@ -154,6 +154,7 @@ git status
 
 Notes:
 
+- If `git pull --rebase` produces conflicts: resolve them in-place (do not `git rebase --abort` and try later — that strands the conflict for the next agent). When in doubt about a conflict, ping the peer who likely caused the divergence and resolve together.
 - `bd dolt push` is best-effort right now (known broken against the configured `git+https://…` remote; see `llm/notes/r0-dolt-cleanup.md` §5). If it fails, capture the error in `llm/LOG.md` and proceed with `git push` (load-bearing for cross-machine visibility).
 - `git status` must show you are up to date with the remote branch.
 
@@ -211,9 +212,11 @@ bd update <id> --notes "Resuming on YYYY-MM-DD: <what I’m doing next>."
 If a bead is in progress but appears abandoned:
 
 ```bash
-bd stale --status in_progress --days 7
+bd stale --status in_progress --days 1   # tighten to our cadence (hours/days, not weeks)
 bd show <id>
 ```
+
+(`bd stale --days 7` is the default; we operate on a much tighter loop, so 1–2 days is usually the right cutoff for "abandoned". Tune per situation.)
 
 Then:
 
@@ -300,7 +303,8 @@ Priority order:
 1. **Rotate the secret first** (assume compromise).
 2. Determine whether it was pushed:
    - If not pushed: fix locally (amend/rewrite) and proceed.
-   - If pushed: do not force-push history rewrites on shared branches without CEO approval. Coordinate a remediation plan.
+   - If pushed to `dev` (our trunk): peers may have already pulled. **Do not force-push** without coordinating with all active agents (`fizzy-claude`, `fizzy-codex`, `fizzy-gemini`) AND CEO approval. The safer path is usually to leave history intact + ensure the rotated secret is the only one in use; force-push is a last resort.
+   - If pushed to `main`: never force-push without explicit CEO sign-off.
 
 Always document the incident in `llm/LOG.md` with redaction (do not copy the secret), and file a bead if follow-up work is required.
 
