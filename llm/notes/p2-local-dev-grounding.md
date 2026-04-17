@@ -235,6 +235,18 @@ Evidence we now have for Q-S-001 / Q-S-001a:
 - CLI path is viable: Rails can call `bd context` + `bd export` successfully (see §6.1).
 - SQL path is viable: Rails can connect directly to the Dolt SQL server via `adapter: trilogy` and query `issues` (see §6.2).
 
-What P2 does *not* decide:
+### 8.1 Pre-existing research that P3 must reconcile with this evidence
+
+`llm/notes/dolt-rails-adapter-research.md` (committed `71e1d1819`) is parallel research that confirms Rails 8 + Dolt is broadly compatible **but surfaces a critical caveat**: Dolt's per-connection branch state (`@@mydb_head_ref` session variable) breaks naive Rails connection pooling. Pooled connections "remember" their branch — if the app ever uses branches and pool size > 1, requests can read/write the wrong branch.
+
+The probe in §6.2 uses `pool: 1` which sidesteps this. Production-bound code MUST address it. Mitigations (per the research doc):
+- One connection pool per branch (recommended), or
+- Explicit `DOLT_CHECKOUT()` per request (Dolt docs flag this as not-recommended).
+
+P3 must weigh this (and the empirical CLI/SQL proofs above) when picking the canonical data path.
+
+### 8.2 What P2 does NOT decide
+
 - Which path becomes canonical in the fork (P3 owns that decision).
 - How writes should attribute actors / emit events / preserve beads hooks (P3 should weigh CLI vs SQL for mutations).
+- Whether to use multi-database Rails 8 config (`primary` + `beads`) — see `dolt-rails-adapter-research.md` §C for the recommended config pattern.
