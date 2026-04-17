@@ -1,0 +1,7 @@
+OK: connected to Dolt SQL server (trilogy) at 127.0.0.1:54309/fizzy
+OK: issues.count=4
+Sample (most recently updated):
+  1. fizzy-jul [closed P2] — Get started
+  2. fizzy-0zx [closed P1] — Sample comprehensive issue
+  3. fizzy-3zi [open P1] — P2: Local Development Environment Grounding (bd+Dolt+Rails)
+  4. fizzy-08o [closed P1] — P1: Foundational Gap Inventory — Fizzy ↔ Beads

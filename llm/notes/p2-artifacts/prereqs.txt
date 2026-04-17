@@ -1,0 +1,9 @@
+## 1) Tooling prerequisites check
+2026-04-17 14:18 PDT
+
+gum:    (missing)
+mise:   (missing)
+gh:     /opt/homebrew/bin/gh
+docker: /usr/local/bin/docker
+jq:     /opt/homebrew/bin/jq
+nc:     /usr/bin/nc

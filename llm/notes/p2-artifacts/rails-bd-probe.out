@@ -1,0 +1,6 @@
+OK: bd context backend=dolt dolt_mode=server host=127.0.0.1 port=54309 db=fizzy
+OK: bd export issues=4
+  1. fizzy-3zi — P2: Local Development Environment Grounding (bd+Dolt+Rails)
+  2. fizzy-08o — P1: Foundational Gap Inventory — Fizzy ↔ Beads
+  3. fizzy-0zx — Sample comprehensive issue
+  4. fizzy-jul — Get started

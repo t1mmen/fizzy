@@ -111,16 +111,13 @@ gum style --foreground 153 "   ˚ ∘             ∘ ˚   "
 gum style --foreground 111 --bold "  ∘˚˳°∘°  𝒻𝒾𝓏𝓏𝓎  °∘°˳˚∘  "
 echo
 
-step "Installing Ruby" mise install --yes
-eval "$(mise hook-env -s bash)"
-
 if which pacman >/dev/null 2>&1; then
-  packages=(imagemagick mariadb-libs openslide libvips libheif libwebp libjxl libraw poppler-glib libcgif ffmpeg rav1e svt-av1 gitleaks)
+  packages=(imagemagick mariadb-libs openslide libvips libheif libwebp libjxl libraw poppler-glib libcgif ffmpeg rav1e svt-av1 gitleaks libyaml pkgconf)
   if ! pacman -Q "${packages[@]}" >/dev/null 2>&1; then
     step "Installing packages" sudo pacman -S --noconfirm --needed "${packages[@]}"
   fi
 elif which brew >/dev/null 2>&1; then
-  packages=(imagemagick openslide vips gitleaks)
+  packages=(imagemagick openslide vips gitleaks libyaml pkg-config dolt)
   missing_packages=()
   for pkg in "${packages[@]}"; do
     if ! brew list "$pkg" &>/dev/null; then
@@ -130,6 +127,16 @@ elif which brew >/dev/null 2>&1; then
   if [ ${#missing_packages[@]} -gt 0 ]; then
     step "Installing packages" brew install "${missing_packages[@]}"
   fi
+fi
+
+step "Installing Ruby" mise install --yes
+eval "$(mise hook-env -s bash)"
+
+# Some environments define a shell function `bundle()` that wraps `nix develop`.
+# Fizzy is not a Nix flake repo, so that wrapper breaks local setup.
+# Ensure we run the real Bundler executable from PATH.
+if declare -F bundle >/dev/null 2>&1; then
+  unset -f bundle
 fi
 
 bundle config set --local auto_install true
