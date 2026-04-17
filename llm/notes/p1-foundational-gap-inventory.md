@@ -1270,18 +1270,22 @@ The Spec rounds (S1–S10) must answer **every** question below before implement
 ### E.4 Lifecycle adapter (status, postpone, close)
 
 > **Q-S-013 — How do Fizzy `drafted` / `published` map to Beads status?**
+> ANSWERED in P6: `llm/notes/p6-lifecycle-adapter.md` §I (draft/publish collapses to inbox vs on-board via board-membership labels).
 > Card, issues.status. Beads default statuses: open / in_progress / blocked / deferred / closed (+ custom). "Drafted" has no clean beads equivalent.
 > Candidates: (a) Fizzy `drafted` maps to a custom Beads status `draft` added to `custom_statuses`; (b) Drafted is Fizzy-only flag (issues.metadata.draft=true) until first publish, then issue is created in beads; (c) Drop `drafted` (cards always exist as beads issues from creation).
 
 > **Q-S-014 — How does the `Closure` row's `closed_by_user_id` survive the move to beads `status=closed`?**
+> ANSWERED in P6: `llm/notes/p6-lifecycle-adapter.md` §I (derive close attribution from Beads `issues.closed_at` + `events.actor`; no Fizzy `closures` source-of-truth).
 > Closure model, beads events history.
 > Candidates: (a) Read closing actor from Beads `events` history (where bd records who closed); (b) Keep Fizzy `closures` table FK'd to `issues.id` for the closer info; (c) Stuff in metadata.
 
 > **Q-S-015 — What does "postpone" become — `status=deferred` only, or `status=deferred + defer_until`?**
+> ANSWERED in P6: `llm/notes/p6-lifecycle-adapter.md` §I (manual postpone = deferred + optional defer_until; entropy postpone = deferred + required defer_until).
 > Card::NotNow, issues.status, issues.defer_until.
 > Candidates: (a) Status only (manual reopen); (b) Status + defer_until from entropy config (auto-reopen at expiry).
 
 > **Q-S-016 — How does Board-level entropy translate to per-issue `defer_until`?**
+> ANSWERED in P6: `llm/notes/p6-lifecycle-adapter.md` §I (keep entropy config Fizzy-side; recurring job writes Beads defer_until via CLI with system actor).
 > Entropy, Board, issues.defer_until.
 > Candidates: (a) Auto-postpone job iterates board's issues, sets `defer_until` per-issue based on board entropy + last_active_at; (b) Entropy retires (per-issue defer becomes manual); (c) Hybrid.
 
