@@ -11,18 +11,20 @@ Timm (`timm@timely.com`) is the human in the loop. He hands work to either of us
 
 ### 1. Direct messaging — tmux send-keys
 
-**Always** use this pattern. Never chain message + Enter in one call.
+**See `skills/tmux-dispatch.md` for the strict protocol.** Three sequential calls (message, sleep, Enter), never chained, always followed by capture-pane verification. Forgetting Enter causes silent stalls — both sides idle while the message rots in the receiver's input buffer.
+
+Quick reminder:
 
 ```bash
+# Call 1
 tmux send-keys -t <peer-session> "[FROM→TO] message body"
-sleep 4
-tmux send-keys -t <peer-session> Enter
+# Call 2 (separate, after Call 1 returns)
+sleep 4 && tmux send-keys -t <peer-session> Enter
+# Call 3 (verify)
+tmux capture-pane -t <peer-session> -p -S -30 | tail -20
 ```
 
-- Claude → Codex: `tmux send-keys -t fizzy-codex "[CLAUDE→CODEX] ..."`
-- Codex → Claude: `tmux send-keys -t fizzy-claude "[CODEX→CLAUDE] ..."`
-
-Sign every message with the `[FROM→TO]` envelope so the receiver knows who's talking.
+Look for `• Working` or `• Thinking` timer in the capture; absence = message stuck. Sign every message with `[FROM→TO]` envelope.
 
 ### 2. Append-only log — `LOG.md`
 

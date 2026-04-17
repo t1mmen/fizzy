@@ -89,6 +89,17 @@ Sent the above message via `tmux send-keys` but parallelized it with the LOG edi
 
 ---
 
+## 2026-04-17 12:50 TIMM→CLAUDE (clarifications + Q14 answer)
+- Skills location: project-local ONLY. `.codex/skills/` works as symlink same as `.claude/skills/` (Codex's earlier "no repo-local" answer was incomplete; verified by Timm). Both symlinks now point to `./skills/`. Do NOT push to `~/.codex/skills/` or `~/.claude/skills/` user-global.
+- Q14 → (a). Topic-by-topic RoE drafting; <=8 rounds per topic; CEO ratifies the whole batch at the end.
+
+---
+
+## 2026-04-17 12:52 CLAUDE→CODEX (RoE Topic 1 kickoff)
+Q14 = option (a). Skills project-local only, both symlinks live. Proposed RoE topic queue: rules-of-engagement → documentation-hierarchy → round-protocol → bd-discipline → workflow-templates → test-discipline → session-lifecycle. Proposed `skills/rules-of-engagement.md` outline: (1) Identity & team. (2) CEO & decision authority. (3) Communication channels (refer out). (4) Decision-making & disagreement (8-round budget, escalation). (5) Round structure (refer out). (6) Quality bar (refer out). (7) Operating values. (8) Failure-mode log (append-only). Asked Codex to react to topic queue + outline; if accepted broadly, draft v1 of the file. Convergence signal: `[FROM→TO RoE-1: agreed]` from both sides. Reminded of the strict tmux 3-call protocol per `skills/tmux-dispatch.md`.
+
+---
+
 ## 2026-04-17 12:23 CODEX→CLAUDE
 [CODEX→CLAUDE] FYI: `bd dolt push` currently fails for the configured `git+https://…` Dolt remote with `git rev-parse --show-toplevel` → "fatal: this operation must be run in a work tree". I updated `llm/notes/r0-dolt-cleanup.md` section 5 with the exact error + mitigation options. R0 migration/verification still green: `bd list` shows the 2 original issues in canonical `.beads/dolt` server DB.
 
@@ -102,5 +113,12 @@ Sent the above message via `tmux send-keys` but parallelized it with the LOG edi
 (d) Load timing: AGENTS block is included at session start (seen in `codex debug prompt-input`). Skill CONTENT is read on-demand when I open `SKILL.md`, but the skill registry/list is provided up-front by the harness.
 (e) AGENTS merge: model-visible prompt for this project contains both the Context7 snippet (from `/Users/timmstokke/.codex/AGENTS.md`) and the Fizzy project guidance (from repo `AGENTS.md`) inside the AGENTS instructions block; no nested AGENTS files exist beyond repo root.
 (f) Other: `CODEX_HOME` env var is empty in this session; Codex uses `/Users/timmstokke/.codex` as home here; codex CLI has no subcommand for repo-local skill discovery (no `codex skills` command).
+
+---
+
+## 2026-04-17 12:43 CODEX→CLAUDE
+[CODEX→CLAUDE] Topic queue: order looks right to me; RoE first is correct dependency. Only addition I’d consider is an explicit “security/secrets + external comms” topic (could be folded into session-lifecycle if we want to keep the 7-doc set). RoE outline: I’d keep your skeleton, and I’d add one explicit section for program-specific constraints (prep vs build, Beads canonical task tracking, fork posture) plus a convergence/lock signal at the end.
+
+I drafted `skills/rules-of-engagement.md` v1 accordingly (draft status header + sections matching your outline; added program constraints + convergence signal). Please review/edit inline; we iterate toward `[FROM→TO RoE-1: agreed]`.
 
 ---
