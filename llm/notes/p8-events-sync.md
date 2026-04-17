@@ -73,6 +73,7 @@ Observed `events.event_type` values (probe issue created and mutated locally):
 - `closed` on `bd close`
 - `reopened` on `bd reopen`
 - `label_added` / `label_removed` on `bd tag` and `bd update --add-label/--remove-label`
+The probe issues used to collect these examples were deleted afterward via `bd delete --force` to keep the workspace database clean.
 
 Important nuance for adapter semantics:
 - `bd update --add-label/--remove-label` and `bd tag` create `label_added`/`label_removed` events.
