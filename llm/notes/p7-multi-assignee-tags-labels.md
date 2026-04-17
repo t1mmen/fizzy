@@ -209,18 +209,18 @@ module Beads
     # P7 additions:
     def self.set_assignee(id, email, actor:)
       # email may be nil/empty to clear
-      # CommandClient: bd update <id> --assignee <email or ""> --actor <actor>
+      # CommandClient: bd --actor <actor> update <id> --assignee <email or "">
     end
 
     def self.add_label(id, label, actor:)
       normalized = Fizzy::Beads::LabelNormalizer.call(label)
       raise ArgumentError, "system label" if normalized.start_with?("fizzy/")
-      # CommandClient: bd update <id> --add-label <normalized> --actor <actor>
+      # CommandClient: bd --actor <actor> update <id> --add-label <normalized>
     end
 
     def self.remove_label(id, label, actor:)
       normalized = Fizzy::Beads::LabelNormalizer.call(label)
-      # CommandClient: bd update <id> --remove-label <normalized> --actor <actor>
+      # CommandClient: bd --actor <actor> update <id> --remove-label <normalized>
     end
 
     def self._add_system_label(id, label, actor:)
@@ -266,8 +266,17 @@ end
 
 - **Q-S-017 — How do Fizzy `Tag` records sync with Beads `labels`?** → ANSWERED. Tag is a Fizzy display object whose normalized `title` IS the Beads label string. Tagging adds label via CLI; deleting tag removes from every tagged issue. Tagging join table dropped in favor of Beads `labels` as source of truth. See §B.
 - **Q-S-018 — Multi-assignee preservation?** → ANSWERED. Option (a) — Fizzy `assignments` sidecar (FK type changes per P3 §E migration); Beads `assignee` mirrors the chronologically-first primary; CLI users see only primary; Fizzy UI shows full list. See §A.
+- **Q-S-053 — Exact `bd update --add-label` / `--remove-label` flag names?** → ANSWERED (Codex empirical verification). Confirmed: `bd update <id> --add-label <label>` / `--remove-label <label>` / `--set-labels <list>`. Shorthands: `bd tag <id> <label>` and `bd label add/remove <id> <label>`. See §B.4.
 
 A subsequent edit to `p1-foundational-gap-inventory.md` will mark these ANSWERED with a backlink.
+
+### F.1 Expected divergence (CLI direct writes vs Fizzy sidecars)
+
+Users who write to Beads via `bd` CLI directly (bypassing the Fizzy adapter) can introduce divergence:
+- `bd update <id> --assignee user@example.com` directly sets Beads `assignee` but does NOT create a Fizzy `Assignment` row. Next time the Fizzy `Assignment#sync_primary_assignee_to_beads` callback fires (because someone added/removed an assignee via Fizzy UI), Beads `assignee` is re-mirrored to the chronologically-first Fizzy assignment — overwriting the direct edit.
+- `bd tag <id> #UPPER` directly writes a non-canonical label. Fizzy displays it as-is; the linter / cleanup story is deferred to v2.
+
+This is **expected**. Users who prefer bd-CLI direct writes accept that the Fizzy UI is authoritative for assignee/label state. Spec round S-divergence-policy may add a friendly warning or a sync UI; V1 just documents.
 
 ---
 
@@ -279,8 +288,7 @@ A subsequent edit to `p1-foundational-gap-inventory.md` will mark these ANSWERED
 > **Q-S-052 — Should the adapter rate-limit Beads writes for bulk-tag operations?**
 > Bulk tagging (e.g., admin re-tags 1000 issues from "old-label" to "new-label") would invoke `bd` 1000 times. Each shell-out is ~100ms. That's a 100-second job. Spec round considers (a) bd batch flag (per P3 §C row 4), (b) job-queue wrapper, (c) acceptable as-is.
 
-> **Q-S-053 — Spec the exact `bd update --add-label` / `--remove-label` flag names.**
-> §B.4 sketches usage. Need empirical verification via `bd update --help` (Spec round S-label-cli).
+<!-- Q-S-053 — DECIDED IN §B.4 + §F (Codex empirical verification). Tombstone retained for cross-ref consistency. -->
 
 ---
 
