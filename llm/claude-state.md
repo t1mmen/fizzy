@@ -1,36 +1,46 @@
 # Claude — current state
 
 **Session**: `fizzy-claude` (tmux)
-**Last updated**: 2026-04-17 13:15
+**Last updated**: 2026-04-17 14:35
 
 ## Now
-- Q1-Q14 answered by Timm. R0 dual-Dolt plumbing done. fizzy-gemini launched per CEO directive.
-- RoE-1, RoE-2, RoE-3 all locked + committed + pushed. RoE-4 v1 by Claude, Codex round 2 reviewed (4 tweaks applied), waiting on Codex matching `[RoE-4: agreed]`.
-- Gemini onboarding in flight (8m+ thinking, has read 4 skill files, appending LOG ACK). Will join from RoE-5 forward; retroactive third-lens on RoE-1..4 once ready.
-- Skills setup: `./skills/` SoT, symlinked into `.claude/skills/`, `.codex/skills/`, `.gemini/skills/`. Project-local only.
-- Branch: `dev` (trunk-based until `branch-pr-workflow.md` ratified).
-- No beads issue claimed yet (RoE prep is meta-work; first beads claims start at R1 Planning).
+- CEO has cleared full autonomous behavior — only stop on hard blocks.
+- RoE meta-program: ✅ all 7 topics 3-of-3 locked + CEO ratified.
+- P1 (Foundational Gap Inventory): ✅ 3-of-3 locked + committed at `246fda54a` + pushed; bead `fizzy-08o` closed.
+- P2 (Local Dev Environment Grounding): 🔄 dispatched to Codex (drafter); Gemini grounded + ready for third-lens; bead `fizzy-3zi`.
+- Branch: `dev` (trunk-based until `branch-pr-workflow.md` ratifies otherwise).
+
+## Currently doing (Claude)
+- Background work while Codex drafts P2: prep P3 brief skeleton (data-path decision Q-S-001/Q-S-001a) so dispatch is instant when P2 locks.
+- Will review Codex's P2 v1 when ready; loop Gemini for third-lens immediately after.
 
 ## Open questions for peers
-- (none active) — Codex round-2 of RoE-4 in flight, Gemini onboarding in flight.
+- (none) — both agents have active P2 work.
 
 ## Blockers
-- (none) — RoE brainstorm is the active workstream.
+- (none) — fully autonomous, dispatching continuously.
 
-## Topic queue (RoE)
-1. ✅ rules-of-engagement.md — locked (`7d29447fe`)
-2. ✅ documentation-hierarchy.md — locked (`dcd98059d`)
-3. ✅ round-protocol.md — locked (`dff339ccc`)
-4. 🔄 bd-discipline.md — Claude v1 + Codex 4 tweaks applied; awaiting Codex agreed
-5. workflow-templates.md
-6. test-discipline.md
-7. session-lifecycle.md
+## Topic queue (Planning rounds)
+- ✅ P1 — foundational-gap-inventory (locked `246fda54a`)
+- 🔄 P2 — local-dev-grounding (in flight, bead `fizzy-3zi`)
+- ⏳ P3 — data-path decision (Q-S-001/001a — depends on P2 evidence)
+- ⏳ P4 — UI projection deep-dive (Q-S-003/009/010 — board+column)
+- ⏳ P5 — auth bridging deep-dive (Q-S-004/008)
+- ⏳ P6 — lifecycle adapter deep-dive (Q-S-013/014/015/016)
+- ⏳ P7 — multi-assignee + tags/labels gap (Q-S-017/018)
+- ⏳ P8 — events two-way sync deep-dive (Q-S-021/005/022)
+- ⏳ P9 — search strategy + filters (Q-S-023/024)
+- ⏳ P10 — fork posture + community-bead-UI lessons (Q-S-007/027 + CEO Q5b research)
+
+(Order may shift as research surfaces priorities.)
+
+## Topic queue (Spec rounds — preview)
+- After P1-P10 lock, S1-S10 produce ~50-80+ "perfect beads" for implementation
+- S* rounds answer the 33 Q-S questions with concrete adapter + schema + migration designs
+
+## Reserved CEO question budget
+- 15 of 20 used (Q1-Q15 with Q12, Q14, Q15 single-question rounds)
+- 5 left in pre-R1 reserve; rest available during R1+ for hard blocks only
 
 ## Pending commits
-- `.gemini/skills` symlink + `skills/bd-discipline.md` — will commit on RoE-4 lock
-
-## Open questions for Codex
-- (none)
-
-## Blockers
-- (none)
+- (none) — P1 fully committed and pushed; P2 work happens on Codex side
