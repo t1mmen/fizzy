@@ -47,6 +47,8 @@ This file is the *foundation* of the operating system for the Fizzy/Beads fork. 
 
 ## 3) Communication channels (non-negotiable)
 
+For where each kind of artifact lives (skills, notes, memories, docs, logs), see `skills/documentation-hierarchy.md` (to be drafted/ratified).
+
 ### 3.1 Direct messaging: tmux send-keys
 
 Use the strict protocol in:
@@ -75,6 +77,7 @@ Failure to follow the tmux protocol is a *process bug* and must be treated as a 
 
 - We are collaborators, not majority-rule voters.
 - We do not “win” disagreements; we converge on a ratified truth.
+- This holds even when a third agent is present (e.g. `fizzy-gemini`). Three agents do not become a vote — they become a council where each lens informs convergence.
 
 ### 4.2 Talk-it-out rule (no silent overrule)
 
@@ -90,6 +93,7 @@ No agent may silently proceed as if their position won without ACK or CEO ratifi
 - For any RoE/topic doc: we cap iteration at **8 rounds**.
 - When the budget is exhausted, we either:
   - narrow scope and ship the minimal ratifiable version, or
+  - seek a third agent's written lens (invite `fizzy-gemini` if active; if tooling supports it and CEO has authorized, spawn a fresh subagent for a written opinion), or
   - escalate to CEO for a decision, with a tight options list.
 
 ### 4.4 Escalation criteria (when to ask Timm)
@@ -127,6 +131,7 @@ Round mechanics live in `skills/round-protocol.md` (to be drafted/ratified next)
 - No “temporary hacks” without an explicit owner + follow-up issue.
 - No silent scope creep.
 - No landing partially-understood codepaths.
+- If you are tempted to shortcut, ping the peer agent for a sanity check before proceeding — the temptation itself is a signal.
 
 ### 6.3 Verification-first culture
 
@@ -165,6 +170,20 @@ Round mechanics live in `skills/round-protocol.md` (to be drafted/ratified next)
 - During planning/spec rounds, avoid implementation changes unless the CEO has explicitly approved a “plumbing fix” exception (example: R0 Dolt cleanup).
 - During implementation, follow beads ownership and quality gates.
 
+### 8.4 Security, secrets, external comms
+
+Deferred to `skills/session-lifecycle.md` (to be drafted/ratified). Until that doc lands, default posture: never log secrets, never push credentials, never call external services *with side effects* (deploys, outbound Slack/email, mutating third-party systems, creating/updating external tickets) without explicit CEO approval. Read-only fetches for documentation/research (Context7, web docs, GitHub browsing, etc.) are allowed.
+
+### 8.5 Cross-session knowledge: `bd remember`
+
+- Persistent learnings that should survive context compaction or a fresh session go into `bd remember "..."` (queryable via `bd memories <keyword>` and `bd recall`).
+- *Procedures* live in `skills/`. *Per-task design notes* live in `llm/notes/`. *Cross-session learnings* live in `bd memories`. Do not duplicate.
+
+### 8.6 CEO interrupts
+
+- When the CEO drops in mid-work, complete the in-flight tool call cleanly (no abandonment), then attend to the CEO message before continuing the prior thread.
+- Update `llm/<agent>-state.md` if the interrupt changes scope, before resuming.
+
 ---
 
 ## 9) Failure-mode log (append-only)
@@ -175,7 +194,14 @@ This section records *process* failures we want to prevent from recurring. Add e
 
 - Failure: message pasted into receiver input but not submitted (missing Enter), causing both sides to idle.
 - Fix: strict three-call tmux dispatch + capture-pane verify.
-- Canonical procedure: `skills/tmux-dispatch.md`.
+- Canonical procedure: [`skills/tmux-dispatch.md`](./tmux-dispatch.md).
+- Caught by: Timm, 2026-04-17 ~12:35 PDT. See `llm/LOG.md` "PROTOCOL FAILURE" entry.
+
+### 9.2 Assumed-internals research (Codex/peer-agent)
+
+- Failure: Claude inferred Codex CLI internals from web/Explore-subagent research instead of asking the live `fizzy-codex` session directly. Resulted in incorrect "no project-local skills dir" claim.
+- Fix: anything about a peer agent's tool surface → ask the peer agent directly via tmux. Web research is not a substitute.
+- Caught by: Timm, 2026-04-17 ~12:25 PDT. See `llm/LOG.md` Q12 entry.
 
 ---
 
