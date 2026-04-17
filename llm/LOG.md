@@ -49,3 +49,32 @@ Meta directives: 10 rounds of planning + 10 rounds of spec before dev. Product t
 Dispatched R0 plumbing task: fix dual-Dolt mismatch immediately. Diagnose → propose → execute with backups → verify → write up at llm/notes/r0-dolt-cleanup.md → ping back. Scope strictly: plumbing only, no fork architecture, no Fizzy code. In parallel I am asking Timm Q6-Q10.
 
 ---
+
+## 2026-04-17 12:18 TIMM→CLAUDE (answers Q6-Q10, summarized by Claude)
+
+**Q6 V1 scope** — must-ship list "roughly right" but every assumption needs diligent research before specing. Rich text/markdown is "certainly a beads feature" (correction — verify exact beads description semantics). 20-round program is a *floor*; specing will produce 50–80+ beads with full rigor (perfect-bead structure: what/why/how/AC, fully actionable, tagged, associated, grouped, prioritized, assigned, iterated). When theoretical meets reality, sizing is dynamic. Specs themselves must be UNAMBIGUOUS — no "convert all pages" or any phrase a lazy agent could misinterpret. Banned.
+
+**Q7 Tech/infra** — (a) Rails locked. (b) Hotwire locked. (c) Deploy target stays as-is for now (decide later). (d) Dolt access pattern: research how `bd`+Dolt work locally so a user running their own local Dolt can `bin/dev` and connect to their existing DBs natively. Critical research item. (e) Keep MySQL for Fizzy-side data; do NOT mutate Dolt schema; rely on `bd` and Dolt as they work today.
+
+**Q8 Governance** — (a) Only `kamal deploy` to prod needs CEO sign-off. Everything else: autonomous after 20-round program completes. Build to 100% functional in local dev mode before any CEO deploy involvement. (b) Async only; CEO drops in occasionally and announces presence; otherwise hearing mode. (c) Disagreements: talk it out until aligned, never overrule. Holistic, surgical, no shortcuts, no wheel-reinvention. Up to 8 rounds back-and-forth per topic to land on best path.
+
+**Q9 Quality** — Quality bar = current Fizzy UI + functionality natively integrated. Local dev not yet booted; we are authorized to boot it and use Playwright/Chromia for visual iteration. A11y, i18n, mobile, perf, browser matrix, ops, monitoring, telemetry, backups: match Fizzy's existing standards exactly. No more, no less. Focus = the product marriage between Fizzy and Dolt.
+
+**Q10 Identity/team/dogfood/docs** —
+- (a) Name stays "Fizzy" for now.
+- (b) Team = `fizzy-claude` + `fizzy-codex` + sometimes `fizzy-gemini`. Tmux session names ARE identity.
+- (c) Dogfood: we buy WHOLESALE into bd CLI for our own work. UI is predominantly for humans. Every UI feature must have Playwright/Chromia coverage.
+- (d) Docs hierarchy as proposed EXCEPT `skills/`: ONE root skills folder, symlinked into each agent's native location. Single source of truth must feed multiple agents — critical.
+
+**Process directives going forward:**
+- Once Codex returns from work, Claude may ask CEO as many questions as needed before R1.
+- ONE question at a time.
+- Each question: pros/cons + multiple choice + option (a) = recommendation.
+- Pseudocode and flowcharts preferred; minimal words.
+
+---
+
+## 2026-04-17 12:23 CODEX→CLAUDE
+[CODEX→CLAUDE] FYI: `bd dolt push` currently fails for the configured `git+https://…` Dolt remote with `git rev-parse --show-toplevel` → "fatal: this operation must be run in a work tree". I updated `llm/notes/r0-dolt-cleanup.md` section 5 with the exact error + mitigation options. R0 migration/verification still green: `bd list` shows the 2 original issues in canonical `.beads/dolt` server DB.
+
+---

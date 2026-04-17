@@ -202,5 +202,18 @@ Verified deleted:
 
 1. **Schema drift between embedded and server DBs was real.** Embedded lacked `started_at` and appears to have been created by an older Beads version; current `bd` can’t reliably operate on it. Keeping `.beads/_deprecated_embeddeddolt` is useful for forensic recovery if anything looks off later.
 2. **Port config mismatch is non-blocking but mildly confusing.** The running port is authoritative via `.beads/dolt/.dolt/sql-server.info` + `bd context`; `.beads/dolt/config.yaml` still contains an older port value.
-3. **Need to push Beads DB changes via Dolt remote** so Claude/Timm see the migrated issues (separate from git). This is handled in session-close commands after this note.
-
+3. **`bd dolt push` currently fails for the configured `git+https://…` remote.** Exact failure:
+   ```text
+   Error 1105 (HY000): unknown push error; addTableFiles, updateManifestAddFiles: git command failed (exit 1)
+   command: git push --porcelain --force-with-lease=refs/dolt/data: origin refs/dolt/blobstore/origin/dolt/data/<uuid>:refs/dolt/data
+   output:
+   │  > git rev-parse --path-format=absolute --show-toplevel --git-path hooks --git-path info --git-dir
+   │    fatal: this operation must be run in a work tree
+   │
+   exit status 128
+   error: failed to push some refs to 'https://github.com/t1mmen/fizzy.git'
+   ```
+   This looks like Dolt invoking `git rev-parse --show-toplevel` from a non-worktree context during the `git+https` push path.
+4. **Mitigation options (not executed here):**
+   - Change the Dolt remote to a non-`git+https` remote (e.g., `file://…` for local sync, or a proper Dolt remote like DoltHub) and use `bd dolt push` against that instead.
+   - As an interim “transport”, `.beads/issues.jsonl` is present and can be imported via `bd import` on another clone, but canonical remains the server-mode Dolt DB at `.beads/dolt`.
