@@ -125,14 +125,14 @@ P3 routes all writes through `bd` CLI. Fizzy `Search::Record` is updated via AR 
 
 The poller has TWO mirroring jobs:
 1. Keep Card + Comment + sidecars (Closure, Tagging, etc.) in sync with Beads.
-2. As a side effect of those AR writes, Searchable callbacks fire and Search::Record updates.
+2. As a follow-up to those callback-bypassing writes, the poller EXPLICITLY calls `Search::Record.upsert_for_issue(...)` / `upsert_for_comment(...)` to keep the FTS index current. (Searchable's `after_*_commit` callbacks do NOT fire on `upsert_all` — by design; see §A.2 doctrine.)
 
 ### C.2 Decision
 
 **Reindex via the Beads → Fizzy ingestion poller (defined in P8 §D), but with a much tighter cadence (every 30s vs hourly for events) and broader scope (Card + Comment mirror updates, not just Search::Record).**
 
 Concretely:
-- The poller (deferred-but-designed in P8) becomes a real V1 component for **mirror-sync** (Card / Comment / Closure / Tagging mirror tables) — the Search::Record updates fall out for free via the existing Searchable AR callbacks.
+- The poller (deferred-but-designed in P8) becomes a real V1 component for **mirror-sync** (Card / Comment / Closure / Tagging mirror tables) — Search::Record updates are triggered EXPLICITLY by the poller (NOT via Searchable callbacks, which the poller's `upsert_all` writes deliberately bypass per §A.2 doctrine).
 - On each tick (every 30s) — **all writes use callback-bypass `upsert_all` + EXPLICIT `Search::Record` upserts; NEVER `create!`/`update!`** (per §A.2 doctrine):
   1. Query Beads `events` since last cursor for `event_type IN ('created', 'updated', 'closed', 'reopened', 'label_added', 'label_removed', 'status_changed')` plus Beads `comments` since last cursor.
   2. For each unseen event:
@@ -158,7 +158,7 @@ Concretely:
 
 ### C.5 Bootstrap / backfill
 
-On first install setup (or any fresh-clone run): the poller does a full backfill scan of all Beads issues + comments to populate `Card` + `Comment` mirror tables (which then triggers `Search::Record` population via callbacks). One-time cost; spec round S-search-bootstrap owns the implementation.
+On first install setup (or any fresh-clone run): the poller does a full backfill scan of all Beads issues + comments to populate `Card` + `Comment` mirror tables via the same callback-bypass `upsert_all` pattern, then EXPLICITLY calls `Search::Record.upsert_for_issue` / `upsert_for_comment` for each row to populate the FTS index (NOT via Searchable callbacks). One-time cost; spec round S-search-bootstrap owns the implementation.
 
 ---
 
