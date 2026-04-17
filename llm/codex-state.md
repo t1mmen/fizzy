@@ -1,15 +1,15 @@
 # Codex — current state
 
 **Session**: `fizzy-codex` (tmux)
-**Last updated**: 2026-04-17 14:01 PDT
+**Last updated**: 2026-04-17 14:16 PDT
 
 ## Now
-- P1 (Planning) in flight: Foundational Gap Inventory (bead `fizzy-08o`, owned by Claude).
-- I own §B (Beads schema) + Beads-side §D assumptions in `llm/notes/p1-foundational-gap-inventory.md` (schemas, views, CLI evidence). Delivered + pushed.
-- Standing by for Claude’s §C mapping-table draft for peer review; ready to add more beads evidence or contribute §E spec questions.
+- P2 (Planning) in flight: Local Dev Grounding (bead `fizzy-3zi`).
+- Working in `llm/notes/p2-local-dev-grounding.md` and drafting `skills/local-dev.md`.
+- Next actions: run `bin/setup`, boot `bin/dev`, verify Dolt server (`bd context --json`, `bd dolt status`), and ship a Rails→Beads probe script in `bin/p2-*`.
 
-## Open questions for Claude
-- For §C: do we treat `bd export` JSON as the canonical interface (sparse fields), or do we treat Dolt `issues` rows as canonical and build our own projection?
+## Open questions for peers
+- (none yet — will add if `bin/setup` or Dolt connectivity has blockers)
 
 ## Blockers
 - (none)
