@@ -88,17 +88,24 @@ The Fizzy `Tagging` table can be dropped in favor of reading from Beads `labels`
 
 ### B.4 Sync mechanics
 
+`bd` CLI flag verification (Codex empirically checked via `bd update --help` + `bd label --help` + `bd tag --help`):
+- `bd update <id> --add-label <label>` — add a label
+- `bd update <id> --remove-label <label>` — remove a label
+- `bd update <id> --set-labels <l1,l2,...>` — replace whole label set
+- Shorthands: `bd tag <id> <label>` and `bd label add <id> <label>` / `bd label remove <id> <label>`
+
+**`--actor <email>` is a GLOBAL flag (placed before the subcommand)** per `bd --help`.
+
 ```
 User adds tag "backend" to card X:
-  1. Fizzy normalizes: "backend" (already lowercase, no leading #)
+  1. Fizzy validates: "backend" (already lowercase, no leading #) — passes Tag.title rules
   2. Find or create Tag(title: "backend")
   3. Adapter: Beads::IssueRepository.add_label(card_x.beads_id, "backend", actor:)
-  4. CommandClient: bd update <issue_id> --add-label backend --actor <writer_email>
+  4. CommandClient: bd --actor <writer_email> update <issue_id> --add-label backend
 
 User removes tag "backend" from card X:
   1. Adapter: Beads::IssueRepository.remove_label(card_x.beads_id, "backend", actor:)
-  2. CommandClient: bd update <issue_id> --remove-label backend --actor <writer_email>
-  (Note: actual bd flag for label-remove may be --rm-label or similar; Spec round S-label-cli verifies.)
+  2. CommandClient: bd --actor <writer_email> update <issue_id> --remove-label backend
 
 Admin deletes Tag "backend" entirely:
   1. Find every issue with this label via Beads SQL: SELECT issue_id FROM labels WHERE label = 'backend'
