@@ -29,12 +29,18 @@ This decision doc closes Q-S-023 (search strategy: Fizzy 16-shard FTS vs `bd sea
 
 ### A.2 Decision
 
-**Adopt option (c) hybrid: Fizzy keeps the 16-shard FTS, `Card` survives as a Fizzy AR model that mirrors Beads `issues` (Beads is canonical; Card is a projection); Searchable callbacks stay on Card/Comment as upstream; `bd search` is exposed only via a thin "advanced search" surface (CLI users + power-user UI).**
+**Adopt option (c) hybrid: Fizzy keeps the 16-shard FTS, `Card` survives as a Fizzy AR model that MIRRORS Beads `issues` (Beads is canonical; Card is a projection); Searchable callbacks stay on Card/Comment as upstream; `bd search` is exposed only via a thin "advanced search" surface (CLI users + power-user UI).**
+
+**CRITICAL constraint (per Codex round-3 catch)**: the poller MUST write to Card/Comment via callback-bypassing methods (`upsert_all` / `update_columns`) and then EXPLICITLY trigger `Search::Record.upsert!` for each. Naive AR `update!` would fire Eventable / Mentions / Watchable / Notifiable / `eventable.event_was_created` callbacks — producing duplicate Fizzy events, system comments, webhook firings, and notification spam. See §C and §D for the safe write pattern.
 
 Concretely:
-- The existing `Search::Record` table + Searchable concern stay essentially as-is, including the `Card` and `Comment` AR models that own the callbacks.
-- The Fizzy `cards` table becomes a **projection/mirror** of Beads `issues` — `cards.id` = Beads issue id (varchar, per P3 §E migration); `cards.title`, `cards.status`, `cards.last_active_at` etc. mirror the corresponding Beads fields.
-- The Beads → Fizzy poller (see §C) keeps the Card mirror in sync with Beads on a tight cadence (writes triggered via `bd` CLI eventually propagate back to the Card mirror).
+- The existing `Search::Record` table + Searchable concern stay essentially as-is, including the `Card` and `Comment` AR models that own the callbacks for *user-initiated* writes (which the fork has fewer of, since most writes go through `bd` CLI).
+- The Fizzy `cards` table becomes a **projection/mirror** of Beads `issues` — `cards.id` = Beads issue id (varchar, per P3 §E migration); `cards.title`, `cards.last_active_at`, etc. mirror Beads fields.
+- **Status enum disambiguation (per Codex round-3 catch)**: Fizzy `Card.status` enum is `{drafted, published}`; Beads `issues.status` is `{open, in_progress, blocked, deferred, closed}`. We keep `Card.status` enum unchanged (for upstream code paths that still depend on it), AND add a NEW `cards.beads_status` string column that mirrors Beads `issues.status`. Mapping rule:
+  - Card mirror always created with `status='published'` (no `drafted` in fork — issues only exist after `bd create`).
+  - "Inbox" (no board label) is recognized via absence of `fizzy/board/*` Tagging row, NOT via Card.status.
+  - `Card::Searchable#searchable?` continues to gate by `published?` (which is always true for mirror cards). Closed-search policy (§C.3) handled separately.
+- The Beads → Fizzy poller (see §C) keeps the mirror in sync with Beads on a tight cadence.
 - All Fizzy-side joins (Search, Filter, Notification, Assignment, Tagging, etc.) use Card AR as today — **no cross-DB joins required** because Card is a Fizzy MySQL row.
 - `Beads::Issue` (P3 §D AR model on the `:beads` Trilogy connection) remains the canonical read for direct Beads queries (e.g., dependency graph, native bead-only operations); it is NOT used for app-side joining with Fizzy sidecars.
 - "Source of truth": Beads remains canonical for task state per CEO Q2. Card is a derived view that may briefly lag (poller cadence — see §C). Conflicts are resolved by re-syncing Card from Beads.
