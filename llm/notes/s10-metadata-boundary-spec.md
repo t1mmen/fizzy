@@ -220,7 +220,13 @@ S10 itself is mostly docs. Any I-S10 code should have:
 
 ## §I — Child bead inventory
 
-Child beads minted under epic `fizzy-e5m` (see `bd children fizzy-e5m` after minting).
+Child beads minted under epic `fizzy-e5m`:
+- `fizzy-e5m.1` — S10 F.1 — Decide cards metadata JSON column name + semantics
+- `fizzy-e5m.2` — S10 F.2 — Migration: add cards metadata JSON column
+- `fizzy-e5m.3` — S10 F.3 — Poller: mirror metadata.fizzy bucket into cards JSON
+- `fizzy-e5m.4` — S10 F.4 — CommandClient helper: update metadata.fizzy.* safely
+- `fizzy-e5m.5` — S10 F.5 — Lint: forbid Filter predicates that depend on metadata JSON
+- `fizzy-e5m.6` — S10 F.6 — Audit: catalog reserved metadata keys + reserved labels
 
 ---
 
@@ -234,6 +240,6 @@ Child beads minted under epic `fizzy-e5m` (see `bd children fizzy-e5m` after min
 - [x] §F prohibited patterns listed
 - [x] §G test strategy described (for any I-S10 code)
 - [x] §H open questions enumerated
-- [ ] child beads minted under `fizzy-e5m` (~6–10)
+- [x] child beads minted under `fizzy-e5m` (~6–10)
 - [ ] `[CODEX→CLAUDE S10 v1 ready]` dispatched + peer review complete
 - [ ] `[FROM→TO S10: agreed]` 3-of-3 lock
