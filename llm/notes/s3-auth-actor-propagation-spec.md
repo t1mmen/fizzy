@@ -14,7 +14,7 @@ This spec turns the P5 auth-bridging decisions into implementation-ready perfect
 Three third-lens priors from Gemini are explicitly enforced:
 1) `Current.actor` MUST be strictly derived from `Identity.email_address` — no other source of truth.
 2) `CommandClient` constructor MUST require an explicit `actor:` kwarg — no anonymous writes; raise on missing.
-3) `FizzyActiveJobExtensions` MUST restore the actor context on async jobs so async `bd` mutations carry correct attribution.
+3) The job-level concern (`BeadsActorTenanted`, mirroring `AccountTenanted`) MUST restore the actor context on async jobs so async `bd` mutations carry correct attribution.
 
 ---
 
@@ -245,7 +245,7 @@ module BeadsActorTenanted
   private
     def with_beads_actor_context(&block)
       if beads_actor.present?
-        Current.set(actor: beads_actor, &block)
+        Current.with(actor: beads_actor, &block)
       else
         yield
       end
@@ -253,27 +253,46 @@ module BeadsActorTenanted
 end
 ```
 
-### D.2 Prepending
+`Current.with(actor: ...) { ... }` is the block form that sets the attribute for the block duration and restores the prior value on exit (mirrors `with_account` in `app/models/current.rb:21`). This guarantees no actor leak between consecutive jobs on the same worker thread.
 
-`FizzyActiveJobExtensions` (per AGENTS.md "Background Jobs") prepends `AccountTenanted` to ActiveJob globally. `BeadsActorTenanted` prepends in the same place.
+### D.2 Prepending (actual code anchors)
+
+There is no `FizzyActiveJobExtensions` constant in the codebase (despite the name appearing in `AGENTS.md` "Background Jobs" + `llm/notes/p1-foundational-gap-inventory.md` §A.12 — both are stale doc references; flagged as a follow-up cleanup, out of S3 scope).
+
+The real prepend points for `AccountTenanted` are:
+- `app/jobs/application_job.rb:2` — `prepend AccountTenanted` (covers all app-defined jobs)
+- `config/initializers/active_job.rb:8` — `ActionMailer::MailDeliveryJob.prepend AccountTenanted`
+- `config/initializers/active_job.rb:12-14` — `Turbo::Streams::ActionBroadcastJob.prepend AccountTenanted` + `Turbo::Streams::BroadcastJob.prepend AccountTenanted` + `Turbo::Streams::BroadcastStreamJob.prepend AccountTenanted`
+
+`BeadsActorTenanted` MUST prepend at the same four anchors:
+- `app/jobs/application_job.rb` — add `prepend BeadsActorTenanted` immediately after the existing `prepend AccountTenanted` line
+- `config/initializers/active_job.rb` — add `BeadsActorTenanted.prepend` calls alongside each existing `AccountTenanted.prepend` (mailer + 3 Turbo broadcast jobs)
+
+Order of prepending matters only if the two concerns interact via callbacks; they do not (independent attributes). For symmetry, prepend `BeadsActorTenanted` AFTER `AccountTenanted` so the actor concern's `around_perform` runs INSIDE the account concern's. This means inside the actor's block, `Current.account` is already restored — useful for any helpers that resolve the system actor per-account.
 
 ### D.3 Recurring jobs (no Current.actor at enqueue time)
 
 Recurring jobs (per `config/recurring.yml`) enqueue from outside any request, so `Current.actor` is unset at `initialize`. Two patterns:
 
-(a) **Job assigns system actor in its own logic** (preferred for V1):
+(a) **Job assigns system actor for the duration of `perform` only — block form, MANDATORY** (preferred for V1):
+
 ```ruby
 class AutoPostponeJob < ApplicationJob
   def perform
-    Current.actor = SystemActor.email
-    Card.due_for_postponement.find_each do |card|
-      Fizzy::Beads::CommandClient.current.update_issue(card.id, status: "deferred")
+    Current.with(actor: SystemActor.email) do
+      Card.due_for_postponement.find_each do |card|
+        Fizzy::Beads::CommandClient.current.update_issue(card.id, status: "deferred")
+      end
     end
   end
 end
 ```
 
-(b) **Job class declares system-actor at the class level** (deferred — could be added later as a `system_actor!` macro). Not in V1.
+**Why block form is non-negotiable**: `ActiveSupport::CurrentAttributes` does NOT auto-clear between successive jobs running on the same Solid Queue worker thread. A bare `Current.actor = SystemActor.email` inside `perform` would persist into the NEXT job that runs on that thread, polluting attribution on jobs that legitimately have no actor (or a different actor restored by `BeadsActorTenanted`).
+
+`Current.with(actor: ...) { ... }` sets the attribute for the block duration and restores the prior value on exit — even on exception. This is the same pattern `Current.with_account` uses (`app/models/current.rb:21-23`).
+
+(b) **Job class declares system-actor at the class level** (deferred — could be added later as a `system_actor!` macro that wraps `perform` automatically). Not in V1.
 
 ### D.4 Synchronous-job path
 
@@ -447,7 +466,7 @@ All beads below are wired as:
 | F.3 | `fizzy-7j3` | Migration: bootstrap system Identity + system User at install | §F.3 (a) | `fizzy-du0` |
 | F.4 | `fizzy-5jt` | Implement `Fizzy::Beads::CommandClient` class (`#invoke!`, `.for`, `.current`, error classes) | §B.1, §B.2, §B.4 | `fizzy-r4v` |
 | F.5 | `fizzy-3ad` | `ApplicationController` `before_action :set_current_actor` (defense-in-depth) | §C.1, §C.2 | `fizzy-r4v` |
-| F.6 | `fizzy-1s3` | `BeadsActorTenanted` concern + prepend in `FizzyActiveJobExtensions` | §D.1, §D.2 | `fizzy-r4v` |
+| F.6 | `fizzy-1s3` | `BeadsActorTenanted` concern + prepend at all four real anchors (`ApplicationJob` + 3 initializer prepends) | §D.1, §D.2 | `fizzy-r4v` |
 | F.7 | `fizzy-90z` | Unit tests: CommandClient + Current + SystemActor | §H.1 | `fizzy-5jt`, `fizzy-du0` |
 | F.8 | `fizzy-qkc` | Integration tests: web cookie + bearer-token actor propagation | §H.2 | `fizzy-3ad`, `fizzy-5jt` |
 | F.9 | `fizzy-efe` | Job tests: BeadsActorTenanted serialize/restore + CommandClient.current in jobs | §H.3 | `fizzy-1s3`, `fizzy-5jt` |
@@ -465,5 +484,9 @@ Pre-lock checklist for S3:
 - [x] §G failure modes enumerated with concrete behaviors
 - [x] §H test strategy covers unit + integration + job
 - [x] §J child bead inventory has cross-spec dep to `fizzy-eq4.8` (and `fizzy-eq4.9` via §I.1 + S5)
-- [ ] `[CLAUDE→CODEX S3 v1 ready]` sent + peer review complete
+- [x] §D.2 references actual code anchors (`ApplicationJob` + 3 initializer prepends), not the phantom `FizzyActiveJobExtensions` referenced in stale repo docs
+- [x] §D.1 + §D.3 use `Current.with(actor: ...) { block }` form to prevent CurrentAttributes leak between successive jobs on the same worker thread
+- [x] `[CLAUDE→CODEX S3 v1 ready]` sent + peer review complete (Codex feedback v1, addressed in v2)
+- [x] `[GEMINI→ALL S3: agreed]` (third-lens, on v1)
+- [ ] `[CODEX→CLAUDE S3: agreed]` (peer, on v2)
 - [ ] `[FROM→TO S3: agreed]` 3-of-3 lock
