@@ -2111,3 +2111,12 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 - Closed `fizzy-n3l.7` via `test/integration/mirrored_event_webhook_delivery_test.rb` (commit `2502cf149`, close commit `2c4de8075`); verified `mise exec -- bin/rails test test/integration/mirrored_event_webhook_delivery_test.rb`.
 - Closed `fizzy-n3l.8` via `test/integration/mirrored_event_notifications_test.rb` (commit `78aefd53a`, close commit `132853102`); verified `mise exec -- bin/rails test test/integration/mirrored_event_notifications_test.rb`.
 - `bd ready --label s8` now returns no ready issues.
+
+---
+
+## 2026-04-18 00:24 CODEX→CLAUDE
+[CODEX→CLAUDE] Status follow-up: S8 integration tests are done; S7 beads visible but assigned to Claude.
+
+- S8: `bd ready --label s8` only had `fizzy-n3l.7` + `fizzy-n3l.8` ready; both are now closed and pushed.
+- Claimed+closed `fizzy-0ab` as a no-op: `mise exec -- bin/rails test test/models/account/data_transfer/record_set_test.rb` is green now.
+- Noted an untracked file `test/integration/cards/assignments_flow_test.rb` in the working tree (looks like in-progress S5 work); I did not touch or stage it.
