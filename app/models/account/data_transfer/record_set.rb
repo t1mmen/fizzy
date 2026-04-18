@@ -91,7 +91,12 @@ class Account::DataTransfer::RecordSet
         raise IntegrityError, "#{model} record ID mismatch: expected #{expected_id}, got #{data['id']}"
       end
 
-      missing = attributes - data.keys
+      # Only require non-nullable columns to be present in the import data.
+      # Nullable columns may be omitted (e.g. when a feature is added later
+      # like events.beads_event_id from S8 fizzy-n3l.1; legacy export ZIPs
+      # don't have it but new schema is fine with NULL).
+      required = attributes.reject { |attr| nullable?(attr) }
+      missing = required - data.keys
       if missing.any?
         raise IntegrityError, "#{file_path} is missing required fields: #{missing.join(', ')}"
       end
@@ -152,5 +157,14 @@ class Account::DataTransfer::RecordSet
 
     def model_dir
       model.table_name
+    end
+
+    # True if `attr` is a nullable column on `model`. Used by check_record
+    # so import data isn't required to include nullable fields (e.g. fields
+    # added in later schema migrations like events.beads_event_id from
+    # fizzy-n3l.1; legacy export ZIPs predate them).
+    def nullable?(attr)
+      column = model.columns_hash[attr.to_s]
+      column.nil? || column.null
     end
 end
