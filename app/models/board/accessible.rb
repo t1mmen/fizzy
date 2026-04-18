@@ -68,31 +68,21 @@ module Board::Accessible
       # 1. Mention->Card
       # 2. Mention->Comment->Card
       #
-      # In SQLite (test/dev), comments.id is a uuid column stored as BLOB(16)
-      # while mentions.source_id is a string column (25-char base36 UUIDv7).
-      # SQL joins comparing those won't match. Use a 2-phase lookup instead.
-      if Board.connection.adapter_name == "SQLite"
-        card_ids = Card.where(board_id: id).pluck(:id)
-        mention_ids = user.mentions.where(source_type: "Card", source_id: card_ids).pluck(:id)
-
-        comment_source_ids = user.mentions.where(source_type: "Comment").pluck(:source_id)
-        if comment_source_ids.any?
-          comment_ids_on_board = Comment.joins(:card).where(id: comment_source_ids, cards: { board_id: id }).pluck(:id)
-          mention_ids.concat(user.mentions.where(source_type: "Comment", source_id: comment_ids_on_board).pluck(:id))
-        end
-
-        return user.mentions.where(id: mention_ids.uniq)
-      end
-
-      adapter = Board.connection.adapter_name.downcase.to_sym
-      uuid_type = ActiveRecord::Type.lookup(:uuid, adapter: adapter)
-      board_id_binary = uuid_type.serialize(id)
+      # Post-S2: Board membership is label-based (`fizzy/board/<uuid>`),
+      # not `cards.board_id` (see Board::Cards + fixtures taggings).
+      #
+      # We compute the board membership set once as a subquery and use it
+      # for both mention paths. This keeps the query MySQL-only and avoids
+      # cross-DB joins.
+      board_card_ids_sql = cards.select(:id).to_sql
 
       user.mentions
         .joins("LEFT JOIN cards ON mentions.source_id = cards.id AND mentions.source_type = 'Card'")
         .joins("LEFT JOIN comments ON mentions.source_id = comments.id AND mentions.source_type = 'Comment'")
         .joins("LEFT JOIN cards AS comment_cards ON comments.card_id = comment_cards.id")
-        .where("(mentions.source_type = 'Card' AND cards.board_id = ?) OR (mentions.source_type = 'Comment' AND comment_cards.board_id = ?)", board_id_binary, board_id_binary)
+        .where(
+          "(mentions.source_type = 'Card' AND cards.id IN (#{board_card_ids_sql})) OR (mentions.source_type = 'Comment' AND comment_cards.id IN (#{board_card_ids_sql}))"
+        )
     end
 
     def notifications_for_user(user)
