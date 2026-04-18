@@ -83,7 +83,14 @@ class Card < ApplicationRecord
       old_board = account.boards.find_by(id: board_id_before_last_save)
 
       transaction do
-        update! column: nil
+        # Post-S2: triage is beads_status-driven, not column-driven. When a card
+        # changes boards, send it back to triage (beads_status=open) so it lands
+        # in a predictable place in the new board.
+        #
+        # IMPORTANT: Use update_columns to avoid nested callback chains from
+        # inside an after_update hook.
+        update_columns(column_id: nil, beads_status: "open", updated_at: Time.current)
+        Fizzy::Beads::CommandClient.current.update_status(id, "open") if id.to_s.start_with?("fizzy-") && !Current.beads_mirror?
         track_board_change_event(old_board.name)
         grant_access_to_assignees unless board.all_access?
       end
@@ -93,7 +100,7 @@ class Card < ApplicationRecord
     end
 
     def track_board_change_event(old_board_name)
-      track_event "board_changed", particulars: { old_board: old_board_name, new_board: board.name }
+      track_event "board_changed", creator: (Current.user || creator), particulars: { old_board: old_board_name, new_board: board.name }
     end
 
     def assign_number
