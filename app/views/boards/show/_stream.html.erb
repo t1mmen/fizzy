@@ -4,7 +4,7 @@
   action: "focus->collapsible-columns#focusOnColumn"
 } do %>
   <header class="cards__header">
-    <%= render "boards/show/expander", title: "Maybe?", count: board.cards.awaiting_triage.count, column_id: "maybe" %>
+    <%= render "boards/show/expander", title: "Maybe?", count: (@stream_cards_count || 0), column_id: "maybe" %>
     <%= render "boards/show/menu/maximize", column_path: board_columns_stream_path(board) %>
   </header>
   <div data-bridge-disabled="true">

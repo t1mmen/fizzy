@@ -84,8 +84,13 @@ class BoardsController < ApplicationController
     end
 
     def show_columns
-      cards = @board.cards.awaiting_triage.latest.with_golden_first.preloaded
-      set_page_and_extract_portion_from cards
+      @projector = Board::Projector.new(@board, user: Current.user)
+      stream_column = Column.new(board: @board, beads_status: "open")
+
+      stream_cards = @projector.cards_for_column(stream_column).active
+      @stream_cards_count = stream_cards.count
+
+      set_page_and_extract_portion_from stream_cards.latest.with_golden_first.preloaded
       fresh_when etag: [ @board, @page.records, @user_filtering, Current.account ]
     end
 
