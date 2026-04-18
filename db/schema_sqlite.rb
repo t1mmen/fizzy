@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_204323) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_204700) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -184,35 +184,6 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_204323) do
     t.uuid "filter_id", null: false
     t.index ["board_id"], name: "index_boards_filters_on_board_id"
     t.index ["filter_id"], name: "index_boards_filters_on_filter_id"
-  end
-
-  create_table "card_activity_spikes", id: :uuid, force: :cascade do |t|
-    t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_card_activity_spikes_on_account_id"
-    t.index ["card_id"], name: "index_card_activity_spikes_on_card_id", unique: true
-  end
-
-  create_table "card_goldnesses", id: :uuid, force: :cascade do |t|
-    t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["account_id"], name: "index_card_goldnesses_on_account_id"
-    t.index ["card_id"], name: "index_card_goldnesses_on_card_id", unique: true
-  end
-
-  create_table "card_not_nows", id: :uuid, force: :cascade do |t|
-    t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.uuid "user_id"
-    t.index ["account_id"], name: "index_card_not_nows_on_account_id"
-    t.index ["card_id"], name: "index_card_not_nows_on_card_id", unique: true
-    t.index ["user_id"], name: "index_card_not_nows_on_user_id"
   end
 
   create_table "cards", id: :uuid, force: :cascade do |t|
