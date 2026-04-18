@@ -339,14 +339,17 @@ Child beads (I-S6 implementation tasks) are minted under epic `fizzy-edq`.
 
 | F.N | Bead | Title | Satisfies | Key dependencies |
 |---|---|---|---|---|
-| F.1 | TBD | Migrate comments.id uuid→varchar(255) (use Beads comment id) | §B.3 | `fizzy-0b8`, `fizzy-jzw`, `fizzy-33r`, `fizzy-hrf`, `fizzy-n9l` |
-| F.2 | TBD | Add CommandClient methods: add_comment + update_description | §C.2, §G | `fizzy-5jt`, `fizzy-r4v` |
-| F.3 | TBD | Implement ActionText→plaintext serializer (for Beads writes) + tests | §E.2, §G | none |
-| F.4 | TBD | Implement plaintext→ActionText HTML converter (for derived caches) + tests | §A.3, §D.2 | none |
-| F.5 | TBD | Rewire Cards::CommentsController#create to Beads + derived-cache write-through; disable update/destroy | §E | F.1, F.2, F.3, F.4, `fizzy-3ad` |
-| F.6 | TBD | Update Mentions concern: parse plaintext @tokens; create Mention rows; tests | §F | F.3, `fizzy-33r` |
-| F.7 | TBD | Rewire CardsController#update description to Beads + derived cache | §G | F.2, F.3, F.4 |
-| F.8 | TBD | S9 poller: mirror Beads comments→MySQL comments + ActionText + search + mention/watch derivations | §D | F.1, F.4, `fizzy-n9l` |
+| F.1 | `fizzy-edq.1` | Migrate comments.id uuid→varchar(255) (use Beads comment id) | §B.3 | `fizzy-0b8`, `fizzy-jzw`, `fizzy-33r`, `fizzy-hrf`, `fizzy-2ae`, `fizzy-n9l` |
+| F.2 | `fizzy-edq.2` | Add CommandClient#add_comment (bd comments add --author --file --json) | §C | `fizzy-5jt`, `fizzy-r4v` |
+| F.3 | `fizzy-edq.3` | Add CommandClient#update_description (bd update --body-file) | §C, §G | `fizzy-5jt`, `fizzy-r4v` |
+| F.4 | `fizzy-edq.4` | Implement ActionText→Beads plaintext serializer (Card.description + Comment.body) | §E.2, §G | none |
+| F.5 | `fizzy-edq.5` | Implement Beads plaintext→ActionText HTML converter (derived cache) | §A.3, §D.2 | none |
+| F.6 | `fizzy-edq.6` | Rewire Cards::CommentsController#create to Beads + derived cache; disable update/destroy | §E | `fizzy-edq.1`, `fizzy-edq.2`, `fizzy-edq.4`, `fizzy-edq.5`, `fizzy-3ad` |
+| F.7 | `fizzy-edq.7` | Rewire CardsController#update description to Beads + derived ActionText cache | §G | `fizzy-edq.3`, `fizzy-edq.4`, `fizzy-edq.5` |
+| F.8 | `fizzy-edq.8` | Mentions: parse plaintext @tokens + create Mention rows (supports CLI comments) | §F | `fizzy-edq.1`, `fizzy-edq.4`, `fizzy-33r` |
+| F.9 | `fizzy-edq.9` | Integration tests: CommentsController#create (Beads write + derived cache) | §H.2 | `fizzy-edq.6` |
+| F.10 | `fizzy-edq.10` | Unit tests: converters + CommandClient comment/description methods | §H.1 | `fizzy-edq.2`, `fizzy-edq.3`, `fizzy-edq.4`, `fizzy-edq.5` |
+| F.11 | `fizzy-edq.11` | S9 poller: mirror Beads comments→MySQL comments + ActionText + search + mention/watch | §D | `fizzy-edq.1`, `fizzy-edq.5`, `fizzy-edq.8`, `fizzy-n9l` |
 
 ## §K — Validation checklist
 
@@ -356,7 +359,7 @@ Child beads (I-S6 implementation tasks) are minted under epic `fizzy-edq`.
 - [x] §D follows S5 mirror precedent: callback-bypass upsert_all + explicit search sync
 - [x] §E disables update/destroy as Beads is append-only
 - [x] §F mention parsing is poller-capable and captures CLI writes
-- [ ] §J child bead IDs minted and dependency graph wired
+- [x] §J child beads minted and dependency graph wired (fizzy-edq.1..11)
 - [ ] `[CODEX→CLAUDE S6 v1 ready]` sent + peer review complete
 - [ ] `[FROM→TO S6: agreed]` 3-of-3 lock
 
