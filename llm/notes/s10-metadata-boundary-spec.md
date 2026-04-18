@@ -184,6 +184,12 @@ Reserved labels (`fizzy/*`) are written only by system code paths (controllers +
 
 **Mirror-cache rule (Gemini prior)**: to avoid ad-hoc Beads SQL in UI views/controllers, S9 poller should mirror the entire `metadata.fizzy` bucket into a single MySQL JSON column on `cards` (e.g. `cards.beads_metadata` or `cards.beads_metadata_json`). This column is for UI display/debug only and is not used for indexed filtering; any filterable metadata must be promoted to a dedicated MySQL column/index.
 
+**Decision (S10 F.1, fizzy-e5m.1, 2026-04-17)** — locked:
+- **Column name**: `cards.beads_metadata` (json type). No `_json` suffix; type is implied by column type.
+- **Mirroring semantics**: **REPLACE** the entire JSON object with the current Beads `metadata.fizzy` bucket on every `mirror_issue` tick (S9 §C.1). NOT deep-merge — replace is the simpler atomic semantic and avoids stale-key retention when a metadata key is deleted in Beads. Any callers that need historical metadata snapshots get them from Beads `events`, not from the mirror column.
+- **Filterability**: `cards.beads_metadata` is for display/debug only. Filter predicates MUST NOT reference it. Any future filterable metadata field must be promoted to a dedicated typed MySQL column with its own index (per §A.2 invariant #2).
+- **Migration ownership**: I-S10 F.2 (`fizzy-e5m.2`) ships the column migration. I-S9 F.3 (`fizzy-pmi.3`) extends `mirror_issue` to write the column.
+
 ### E.2 Filter/search
 
 Filters and search must compile entirely to MySQL (P9 + S9); never query Beads at request time.
