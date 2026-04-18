@@ -7,3 +7,21 @@ mobile:
   id: <%= ActiveRecord::FixtureSet.identify("mobile", :uuid) %>
   title: mobile
   account: 37s_uuid
+
+# Board membership labels (S2 §A.3): `fizzy/board/<board_uuid>`.
+# These tags are system-owned and used only for board projection; they should
+# be hidden from user-facing tag lists.
+writebook_board_membership:
+  id: <%= ActiveRecord::FixtureSet.identify("writebook_board_membership", :uuid) %>
+  title: <%= "fizzy/board/#{ActiveRecord::FixtureSet.identify("writebook", :uuid)}" %>
+  account: 37s_uuid
+
+private_board_membership:
+  id: <%= ActiveRecord::FixtureSet.identify("private_board_membership", :uuid) %>
+  title: <%= "fizzy/board/#{ActiveRecord::FixtureSet.identify("private", :uuid)}" %>
+  account: 37s_uuid
+
+miltons_wish_list_board_membership:
+  id: <%= ActiveRecord::FixtureSet.identify("miltons_wish_list_board_membership", :uuid) %>
+  title: <%= "fizzy/board/#{ActiveRecord::FixtureSet.identify("miltons_wish_list", :uuid)}" %>
+  account: initech_uuid

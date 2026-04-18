@@ -21,3 +21,54 @@ text_mobile:
   account: 37s_uuid
   card: text_uuid
   tag: mobile_uuid
+
+# Board membership labels (S2 §A.3): each card belongs to exactly one board via
+# a `fizzy/board/<board_uuid>` tag. These taggings replace reliance on
+# `cards.board_id` for Board#cards projection.
+logo_writebook_board:
+  id: <%= ActiveRecord::FixtureSet.identify("logo_writebook_board_tagging", :uuid) %>
+  account: 37s_uuid
+  card: logo_uuid
+  tag: writebook_board_membership_uuid
+
+layout_writebook_board:
+  id: <%= ActiveRecord::FixtureSet.identify("layout_writebook_board_tagging", :uuid) %>
+  account: 37s_uuid
+  card: layout_uuid
+  tag: writebook_board_membership_uuid
+
+text_writebook_board:
+  id: <%= ActiveRecord::FixtureSet.identify("text_writebook_board_tagging", :uuid) %>
+  account: 37s_uuid
+  card: text_uuid
+  tag: writebook_board_membership_uuid
+
+shipping_writebook_board:
+  id: <%= ActiveRecord::FixtureSet.identify("shipping_writebook_board_tagging", :uuid) %>
+  account: 37s_uuid
+  card: shipping_uuid
+  tag: writebook_board_membership_uuid
+
+buy_domain_writebook_board:
+  id: <%= ActiveRecord::FixtureSet.identify("buy_domain_writebook_board_tagging", :uuid) %>
+  account: 37s_uuid
+  card: buy_domain_uuid
+  tag: writebook_board_membership_uuid
+
+radio_miltons_wish_list_board:
+  id: <%= ActiveRecord::FixtureSet.identify("radio_miltons_wish_list_board_tagging", :uuid) %>
+  account: initech_uuid
+  card: radio_uuid
+  tag: miltons_wish_list_board_membership_uuid
+
+paycheck_miltons_wish_list_board:
+  id: <%= ActiveRecord::FixtureSet.identify("paycheck_miltons_wish_list_board_tagging", :uuid) %>
+  account: initech_uuid
+  card: paycheck_uuid
+  tag: miltons_wish_list_board_membership_uuid
+
+unfinished_thoughts_miltons_wish_list_board:
+  id: <%= ActiveRecord::FixtureSet.identify("unfinished_thoughts_miltons_wish_list_board_tagging", :uuid) %>
+  account: initech_uuid
+  card: unfinished_thoughts_uuid
+  tag: miltons_wish_list_board_membership_uuid
