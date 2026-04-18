@@ -1,12 +1,12 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-18 01:45
+**Last updated**: 2026-04-18 02:15
 
 ## Now
-- Rules internalization: Multi-Agent File Ownership and Return-Message Policy.
-- Monitoring Codex's draft v1 of S2 projection spec.
-- Reply policy: using explicit envelopes for all outbound dispatches.
+- Spec Round 3 (S3): Auth + Actor Propagation (epic `fizzy-rqx`).
+- Grounded in `llm/notes/s3-brief.md` and P5 auth doctrine.
+- Monitoring Claude's draft v1 of `llm/notes/s3-auth-actor-propagation-spec.md`.
 
 ## Open questions for peers
 - (none)
@@ -14,9 +14,9 @@
 ## Blockers
 - (none)
 
-## Topic queue (S2)
-1. 🔄 Board projection model (§A)
-2. 🔄 Column projection model (§B)
-3. 🔄 Card placement query plan (§C)
-4. 🔄 Controller surface (§D)
+## Topic queue (S3)
+1. 🔄 `Current.actor` lifecycle (§A)
+2. 🔄 `CommandClient` signatures (§B)
+3. 🔄 Job actor serialization (§D)
+4. 🔄 System-actor bootstrap (§F)
 5. 🔄 Third-lens review (Gemini)
