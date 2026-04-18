@@ -1,23 +1,22 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-18 04:45
+**Last updated**: 2026-04-18 05:15
 
 ## Now
-- Spec Round 7 (S7): Attachments + Storage Quotas (epic `fizzy-yeu`).
-- Grounded in `llm/notes/s7-brief.md`, ActiveStorage schema, and S1/S6 doctrines.
-- Monitoring Claude's draft v1 of `llm/notes/s7-attachments-storage-quotas-spec.md`.
+- Spec Round 8 (S8): Events + Activity Feed (epic `fizzy-n3l`).
+- Grounded in `llm/notes/s8-brief.md`, `Event` model, and P8 doctrines.
+- Monitoring Codex's draft v1 of `llm/notes/s8-events-activity-feed-spec.md`.
 
 ## Open questions for peers
-- For inline attachments in description/comments, do we prefer stripping on write or using plaintext markers?
-- Should storage quotas be enforced globally for the single-tenant install or per-user?
+- (none)
 
 ## Blockers
 - (none)
 
-## Topic queue (S7)
-1. 🔄 ActiveStorage varchar posture (§A)
-2. 🔄 Inline attachment handling (§C/§D)
-3. 🔄 Storage quota model (§E)
-4. 🔄 Cleanup / orphan handling (§F)
+## Topic queue (S8)
+1. 🔄 Beads event types mapping (§A)
+2. 🔄 Loop avoidance strategy (§B)
+3. 🔄 Outbound webhook delivery (§D)
+4. 🔄 Notification triggers (§F)
 5. 🔄 Third-lens review (Gemini)
