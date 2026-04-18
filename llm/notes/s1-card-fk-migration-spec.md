@@ -258,7 +258,7 @@ bd graph fizzy-669      # render dependency DAG
 
 ## §J — Resolved Q-S items
 
-- **Q-S-002a — UUID→string FK migration cost** → ANSWERED. M-a widen-all approach formalized as 22 child beads; ordered; safety + rollback documented. See §A-§H.
+- **Q-S-002a — UUID→string FK migration cost** → ANSWERED. M-a widen-all approach formalized as 23 child beads; ordered; safety + rollback documented. See §A-§H.
 - **Q-S-011** — already merged with Q-S-002a in P3 §E; this S1 round formalizes the implementation steps.
 
 ---
