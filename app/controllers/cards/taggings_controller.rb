@@ -7,8 +7,17 @@ class Cards::TaggingsController < ApplicationController
     fresh_when etag: [ @tags, @card.tags ]
   end
 
+  # S5 §G (fizzy-69z): for Beads-id cards we delegate to CommandClient and let
+  # the S9 poller mirror the change back. For legacy uuid-id cards (no Beads
+  # issue) we fall back to direct AR mutation via Card#toggle_tag_with.
   def create
-    @card.toggle_tag_with sanitized_tag_title_param
+    title = normalize_or_reject(params.required(:tag_title)) or return
+
+    if mirrored?
+      Fizzy::Beads::CommandClient.current.add_label(@card.id, title)
+    else
+      @card.toggle_tag_with(title)
+    end
 
     respond_to do |format|
       format.turbo_stream
@@ -16,8 +25,36 @@ class Cards::TaggingsController < ApplicationController
     end
   end
 
+  def destroy
+    title = normalize_or_reject(params[:id]) or return
+
+    if mirrored?
+      Fizzy::Beads::CommandClient.current.remove_label(@card.id, title)
+    elsif tag = @card.tags.find_by(title: title)
+      @card.taggings.destroy_by(tag: tag)
+    end
+
+    respond_to do |format|
+      format.turbo_stream { render :create }
+      format.json { head :no_content }
+    end
+  end
+
   private
-    def sanitized_tag_title_param
-      params.required(:tag_title).strip.gsub(/\A#/, "")
+    def mirrored?
+      @card.id.to_s.start_with?("fizzy-")
+    end
+
+    def normalize_or_reject(raw)
+      title = Fizzy::Beads::LabelNormalizer.call(raw)
+      if Fizzy::Beads::ReservedNamespace.violates?(title)
+        head :unprocessable_entity
+        nil
+      else
+        title
+      end
+    rescue Fizzy::Beads::LabelNormalizer::InvalidLabelError
+      head :unprocessable_entity
+      nil
     end
 end
