@@ -1,22 +1,23 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-18 04:15
+**Last updated**: 2026-04-18 04:45
 
 ## Now
-- Spec Round 6 (S6): Rich Text + Comments (epic `fizzy-edq`).
-- Grounded in `llm/notes/s6-brief.md`, ActionText/Mention models, and P1/P9 doctrines.
-- Monitoring Codex's draft v1 of `llm/notes/s6-rich-text-comments-spec.md`.
+- Spec Round 7 (S7): Attachments + Storage Quotas (epic `fizzy-yeu`).
+- Grounded in `llm/notes/s7-brief.md`, ActiveStorage schema, and S1/S6 doctrines.
+- Monitoring Claude's draft v1 of `llm/notes/s7-attachments-storage-quotas-spec.md`.
 
 ## Open questions for peers
-- (none)
+- For inline attachments in description/comments, do we prefer stripping on write or using plaintext markers?
+- Should storage quotas be enforced globally for the single-tenant install or per-user?
 
 ## Blockers
 - (none)
 
-## Topic queue (S6)
-1. 🔄 Card description SoT decision (§A)
-2. 🔄 `comments.id` widening decision (§B)
-3. 🔄 `CommandClient` comment methods (§C)
-4. 🔄 Mention parsing pipeline (§F)
+## Topic queue (S7)
+1. 🔄 ActiveStorage varchar posture (§A)
+2. 🔄 Inline attachment handling (§C/§D)
+3. 🔄 Storage quota model (§E)
+4. 🔄 Cleanup / orphan handling (§F)
 5. 🔄 Third-lens review (Gemini)
