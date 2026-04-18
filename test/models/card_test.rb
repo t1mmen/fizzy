@@ -107,7 +107,7 @@ class CardTest < ActiveSupport::TestCase
   end
 
   test "send back to triage when moved to a new board" do
-    cards(:logo).update! column: columns(:writebook_in_progress)
+    cards(:logo).update! column: columns(:writebook_in_progress), beads_status: "in_progress"
 
     assert_changes -> { cards(:logo).reload.triaged? }, from: true, to: false do
       cards(:logo).update! board: boards(:private)
@@ -131,10 +131,11 @@ class CardTest < ActiveSupport::TestCase
     old_board = card.board
     new_board = boards(:private)
 
-    card.comments.create!(body: "Sensitive information", creator: users(:david))
+    comment = card.comments.create!(body: "Sensitive information", creator: users(:david))
+    comment.track_event "created", creator: comment.creator
 
     card_events_on_old_board = card.events.where(board: old_board)
-    comment_events_on_old_board = Event.where(board: old_board, eventable: card.comments)
+    comment_events_on_old_board = Event.where(board: old_board, eventable: comment)
 
     assert card_events_on_old_board.exists?
     assert comment_events_on_old_board.exists?
@@ -144,7 +145,7 @@ class CardTest < ActiveSupport::TestCase
     assert_equal new_board, card.reload.board
 
     card_events_on_new_board = card.events.where(board: new_board)
-    comment_events_on_new_board = Event.where(board: new_board, eventable: card.comments)
+    comment_events_on_new_board = Event.where(board: new_board, eventable: comment)
 
     assert_empty card_events_on_old_board
     assert_empty comment_events_on_old_board

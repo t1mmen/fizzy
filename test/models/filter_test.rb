@@ -26,6 +26,10 @@ class FilterTest < ActiveSupport::TestCase
     filter = users(:david).filters.new indexed_by: "maybe", board_ids: [ boards(:writebook).id ]
     assert_equal [ cards(:buy_domain) ], filter.cards
 
+    client = mock("beads_client")
+    client.expects(:update_status).with(cards(:shipping).id, "open")
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+
     cards(:shipping).postpone
     filter = users(:david).filters.new indexed_by: "not_now"
     assert_includes filter.cards, cards(:shipping)

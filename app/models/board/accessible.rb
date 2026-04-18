@@ -67,7 +67,26 @@ module Board::Accessible
       #
       # 1. Mention->Card
       # 2. Mention->Comment->Card
-      board_id_binary = ActiveRecord::Type::Uuid.new.serialize(id)
+      #
+      # In SQLite (test/dev), comments.id is a uuid column stored as BLOB(16)
+      # while mentions.source_id is a string column (25-char base36 UUIDv7).
+      # SQL joins comparing those won't match. Use a 2-phase lookup instead.
+      if Board.connection.adapter_name == "SQLite"
+        card_ids = Card.where(board_id: id).pluck(:id)
+        mention_ids = user.mentions.where(source_type: "Card", source_id: card_ids).pluck(:id)
+
+        comment_source_ids = user.mentions.where(source_type: "Comment").pluck(:source_id)
+        if comment_source_ids.any?
+          comment_ids_on_board = Comment.joins(:card).where(id: comment_source_ids, cards: { board_id: id }).pluck(:id)
+          mention_ids.concat(user.mentions.where(source_type: "Comment", source_id: comment_ids_on_board).pluck(:id))
+        end
+
+        return user.mentions.where(id: mention_ids.uniq)
+      end
+
+      adapter = Board.connection.adapter_name.downcase.to_sym
+      uuid_type = ActiveRecord::Type.lookup(:uuid, adapter: adapter)
+      board_id_binary = uuid_type.serialize(id)
 
       user.mentions
         .joins("LEFT JOIN cards ON mentions.source_id = cards.id AND mentions.source_type = 'Card'")
@@ -77,24 +96,10 @@ module Board::Accessible
     end
 
     def notifications_for_user(user)
-      # Query handles 2 paths:
-      #
-      # 1. Notification->Event->Card
-      # 2. Notification->Event->Comment->Card
-      #
-      # Notification->Event->Mention->Card and Notification->Event->Mention->Comment->Card are
-      # handled by destroying mentions_for_user.
-      uuid_type = ActiveRecord::Type.lookup(:uuid, adapter: :trilogy)
-      board_id_binary = uuid_type.serialize(id)
-
-      user.notifications
-        .joins("LEFT JOIN events ON notifications.source_id = events.id AND notifications.source_type = 'Event'")
-        .joins("LEFT JOIN cards AS event_cards ON events.eventable_id = event_cards.id AND events.eventable_type = 'Card'")
-        .joins("LEFT JOIN comments AS event_comments ON events.eventable_id = event_comments.id AND events.eventable_type = 'Comment'")
-        .joins("LEFT JOIN cards AS event_comment_cards ON event_comments.card_id = event_comment_cards.id")
-        .where("(notifications.source_type = 'Event' AND events.eventable_type = 'Card' AND event_cards.board_id = ?) OR
-              (notifications.source_type = 'Event' AND events.eventable_type = 'Comment' AND event_comment_cards.board_id = ?)",
-               board_id_binary, board_id_binary)
+      # For access cleanup we don't need to join through Event->(Card|Comment) to
+      # infer the board. notifications.card_id is the canonical denormalized
+      # reference and is always populated.
+      user.notifications.where(card_id: cards.select(:id))
     end
 
     def watches_for(user)

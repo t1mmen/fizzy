@@ -3,7 +3,12 @@ require "test_helper"
 class EntropyAutoPostponeAllDueTest < ActiveSupport::TestCase
   setup do
     Current.session = sessions(:david)
+    @previous_install_hostname = Rails.application.config.x.fizzy.install_hostname
     Rails.application.config.x.fizzy.install_hostname = "test.local"
+  end
+
+  teardown do
+    Rails.application.config.x.fizzy.install_hostname = @previous_install_hostname
   end
 
   test "auto_postpone_all_due defers with system actor and does not leak Current.actor" do
@@ -27,4 +32,3 @@ class EntropyAutoPostponeAllDueTest < ActiveSupport::TestCase
     assert_equal original_actor, Current.actor
   end
 end
-

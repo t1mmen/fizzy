@@ -66,7 +66,12 @@ class Card < ApplicationRecord
     transaction do
       card.update!(board: new_board)
       card.events.update_all(board_id: new_board.id)
-      Event.where(eventable: card.comments).update_all(board_id: new_board.id)
+      # IMPORTANT: In SQLite (test/dev), comments.id is a uuid column (stored as
+      # binary) while events.eventable_id is a string column. Avoid joins/subqueries
+      # that compare binary ids to strings; instead, pluck comment ids as strings
+      # and update comment-events by eventable_id.
+      comment_ids = Comment.where(card_id: id).pluck(:id)
+      Event.where(eventable_type: "Comment", eventable_id: comment_ids).update_all(board_id: new_board.id) if comment_ids.any?
     end
   end
 
