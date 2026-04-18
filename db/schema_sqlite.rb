@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_215000) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_220000) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -225,6 +225,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_215000) do
 
   create_table "cards", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
+    t.json "beads_metadata"
     t.string "beads_status", limit: 32
     t.uuid "board_id", null: false
     t.uuid "column_id"
