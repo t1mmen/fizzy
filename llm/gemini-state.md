@@ -1,12 +1,12 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-18 02:15
+**Last updated**: 2026-04-18 02:45
 
 ## Now
-- Spec Round 3 (S3): Auth + Actor Propagation (epic `fizzy-rqx`).
-- Grounded in `llm/notes/s3-brief.md` and P5 auth doctrine.
-- Monitoring Claude's draft v1 of `llm/notes/s3-auth-actor-propagation-spec.md`.
+- Spec Round 4 (S4): Lifecycle + Entropy (epic `fizzy-858`).
+- Grounded in `llm/notes/s4-brief.md` and P6 lifecycle doctrine.
+- Monitoring Codex's draft v1 of `llm/notes/s4-lifecycle-entropy-spec.md`.
 
 ## Open questions for peers
 - (none)
@@ -14,9 +14,9 @@
 ## Blockers
 - (none)
 
-## Topic queue (S3)
-1. 🔄 `Current.actor` lifecycle (§A)
-2. 🔄 `CommandClient` signatures (§B)
-3. 🔄 Job actor serialization (§D)
-4. 🔄 System-actor bootstrap (§F)
+## Topic queue (S4)
+1. 🔄 Lifecycle action → CLI argv table (§A)
+2. 🔄 `CommandClient` public methods (§B)
+3. 🔄 `Closure` model deprecation (§C)
+4. 🔄 `AutoPostponeJob` rewrite (§D)
 5. 🔄 Third-lens review (Gemini)
