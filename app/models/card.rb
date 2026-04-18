@@ -13,6 +13,13 @@ class Card < ApplicationRecord
   has_rich_text :description
 
   before_save :set_default_title, if: :published?
+  # Post-S1 widening (fizzy-05q): cards.id is now varchar(255), so the
+  # UuidPrimaryKeyDefault initializer no longer auto-generates UUIDs (it
+  # only fires on :uuid columns). Explicit before_create generates a
+  # UUID for AR-created cards (fixtures, tests, transitional code paths
+  # that don't go through bd CLI). Cards mirrored from Beads carry the
+  # Beads issue id (e.g. "fizzy-669") and skip this default.
+  before_create -> { self.id ||= ActiveRecord::Type::Uuid.generate }
   before_create :assign_number
 
   after_save   -> { board.touch }, if: :published?
