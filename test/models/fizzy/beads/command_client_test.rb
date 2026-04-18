@@ -5,9 +5,42 @@ class Fizzy::Beads::CommandClientTest < ActiveSupport::TestCase
     Struct.new(:success?, :exitstatus).new(true, 0)
   end
 
+  test ".for(Identity) extracts email_address" do
+    identity = identities(:david)
+    client = Fizzy::Beads::CommandClient.for(identity, bd_bin: "bd")
+
+    Open3.expects(:capture3)
+      .with("bd", "--actor", identity.email_address, "update", "fizzy-abc", "--status", "blocked")
+      .returns(["", "", ok_status])
+
+    client.update_status("fizzy-abc", "blocked")
+  end
+
+  test ".for(String) passes through actor email string" do
+    client = Fizzy::Beads::CommandClient.for("actor@example.com", bd_bin: "bd")
+
+    Open3.expects(:capture3)
+      .with("bd", "--actor", "actor@example.com", "update", "fizzy-abc", "--status", "blocked")
+      .returns(["", "", ok_status])
+
+    client.update_status("fizzy-abc", "blocked")
+  end
+
   test ".for(nil) raises MissingActorError" do
     assert_raises(Fizzy::Beads::CommandClient::MissingActorError) do
       Fizzy::Beads::CommandClient.for(nil)
+    end
+  end
+
+  test ".for(blank String) raises MissingActorError" do
+    assert_raises(Fizzy::Beads::CommandClient::MissingActorError) do
+      Fizzy::Beads::CommandClient.for("")
+    end
+  end
+
+  test ".for(unsupported type) raises ArgumentError" do
+    assert_raises(ArgumentError) do
+      Fizzy::Beads::CommandClient.for(123)
     end
   end
 
@@ -18,6 +51,20 @@ class Fizzy::Beads::CommandClientTest < ActiveSupport::TestCase
     assert_raises(Fizzy::Beads::CommandClient::MissingActorError) do
       Fizzy::Beads::CommandClient.current
     end
+  ensure
+    Current.actor = previous
+  end
+
+  test ".current uses Current.actor" do
+    previous = Current.actor
+    Current.actor = "current@example.com"
+
+    client = Fizzy::Beads::CommandClient.current(bd_bin: "bd")
+    Open3.expects(:capture3)
+      .with("bd", "--actor", "current@example.com", "update", "fizzy-abc", "--status", "open")
+      .returns(["", "", ok_status])
+
+    client.update_status("fizzy-abc", "open")
   ensure
     Current.actor = previous
   end
@@ -46,6 +93,18 @@ class Fizzy::Beads::CommandClientTest < ActiveSupport::TestCase
     Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "show", "fizzy-abc").returns(["ok", "", status])
 
     assert_equal "ok", client.send(:invoke!, ["show", "fizzy-abc"])
+  end
+
+  test "invoke! wraps Errno::ENOENT as CommandError with status=nil" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+    Open3.stubs(:capture3).raises(Errno::ENOENT.new("no such file or directory - bd"))
+
+    error = assert_raises(Fizzy::Beads::CommandClient::CommandError) do
+      client.send(:invoke!, ["show", "fizzy-abc"])
+    end
+
+    assert_nil error.status
+    assert_match(/no such file or directory/i, error.stderr)
   end
 
   test "update_status calls bd update --status" do
