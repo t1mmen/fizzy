@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_02_18_120000) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_204323) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -217,6 +217,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_18_120000) do
 
   create_table "cards", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
+    t.string "beads_status", limit: 32
     t.uuid "board_id", null: false
     t.uuid "column_id"
     t.datetime "created_at", null: false
@@ -229,6 +230,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_02_18_120000) do
     t.datetime "updated_at", null: false
     t.index ["account_id", "last_active_at", "status"], name: "index_cards_on_account_id_and_last_active_at_and_status"
     t.index ["account_id", "number"], name: "index_cards_on_account_id_and_number", unique: true
+    t.index ["beads_status"], name: "index_cards_on_beads_status"
     t.index ["board_id"], name: "index_cards_on_board_id"
     t.index ["column_id"], name: "index_cards_on_column_id"
   end
