@@ -8,6 +8,10 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
   test "create" do
     card = cards(:logo)
 
+    client = mock
+    client.expects(:close_issue).with(card.id)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+
     assert_changes -> { card.reload.closed? }, from: false, to: true do
       post card_closure_path(card), as: :turbo_stream
       assert_card_container_rerendered(card)
@@ -16,6 +20,10 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy" do
     card = cards(:shipping)
+
+    client = mock
+    client.expects(:reopen_issue).with(card.id)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
     assert_changes -> { card.reload.closed? }, from: true, to: false do
       delete card_closure_path(card), as: :turbo_stream
@@ -28,6 +36,10 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
 
     assert_not card.closed?
 
+    client = mock
+    client.expects(:close_issue).with(card.id)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+
     post card_closure_path(card), as: :json
 
     assert_response :no_content
@@ -38,6 +50,10 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
     card = cards(:shipping)
 
     assert card.closed?
+
+    client = mock
+    client.expects(:reopen_issue).with(card.id)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
     delete card_closure_path(card), as: :json
 

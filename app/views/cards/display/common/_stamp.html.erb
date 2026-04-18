@@ -20,6 +20,8 @@
   } do %>
     <span class="card__closed-title" data-text="Done">Done</span>
     <strong class="card__closed-date"><%= card.closed_at.strftime("%b %d, %Y") %></strong>
-    <span class="card__closed-by-line">by <span class="card__closed-by"><%= card.closed_by.familiar_name %></span></span>
+    <% if card.closed_by.present? %>
+      <span class="card__closed-by-line">by <span class="card__closed-by"><%= card.closed_by.familiar_name %></span></span>
+    <% end %>
   <% end %>
 <% end %>

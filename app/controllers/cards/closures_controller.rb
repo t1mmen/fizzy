@@ -3,7 +3,8 @@ class Cards::ClosuresController < ApplicationController
 
   def create
     capture_card_location
-    @card.close
+    Fizzy::Beads::CommandClient.current.close_issue(@card.id)
+    @card.update_columns(beads_status: "closed", closed_at: Time.current, updated_at: Time.current)
     refresh_stream_if_needed
 
     respond_to do |format|
@@ -13,7 +14,9 @@ class Cards::ClosuresController < ApplicationController
   end
 
   def destroy
-    @card.reopen
+    Fizzy::Beads::CommandClient.current.reopen_issue(@card.id)
+    @card.update_columns(beads_status: "open", closed_at: nil, close_reason: nil, updated_at: Time.current)
+    @card.closure&.destroy
     refresh_stream_after_reopen
 
     respond_to do |format|

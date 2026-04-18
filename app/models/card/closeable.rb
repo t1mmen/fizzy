@@ -4,16 +4,25 @@ module Card::Closeable
   included do
     has_one :closure, dependent: :destroy
 
-    scope :closed, -> { joins(:closure) }
-    scope :open, -> { where.missing(:closure) }
+    scope :closed, -> {
+      left_outer_joins(:closure)
+        .where("cards.beads_status = ? OR closures.id IS NOT NULL", "closed")
+    }
+    scope :open, -> {
+      left_outer_joins(:closure)
+        .where("cards.beads_status IS NULL OR cards.beads_status != ?", "closed")
+        .where(closures: { id: nil })
+    }
 
-    scope :recently_closed_first, -> { closed.order(closures: { created_at: :desc }) }
-    scope :closed_at_window, ->(window) { closed.where(closures: { created_at: window }) }
-    scope :closed_by, ->(users) { closed.where(closures: { user_id: Array(users) }) }
+    scope :recently_closed_first, -> { closed.order(closed_at: :desc) }
+    scope :closed_at_window, ->(window) {
+      closed.where("COALESCE(cards.closed_at, closures.created_at) BETWEEN ? AND ?", window.begin, window.end)
+    }
+    scope :closed_by, ->(users) { joins(:closure).where(closures: { user_id: Array(users) }) }
   end
 
   def closed?
-    closure.present?
+    beads_status.to_s == "closed" || closure.present?
   end
 
   def open?
@@ -25,7 +34,7 @@ module Card::Closeable
   end
 
   def closed_at
-    closure&.created_at
+    self[:closed_at] || closure&.created_at
   end
 
   def close(user: Current.user)
