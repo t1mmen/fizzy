@@ -4,6 +4,7 @@ module Authentication
   included do
     before_action :require_account # Checking and setting account must happen first
     before_action :require_authentication
+    before_action :set_current_actor, if: :authenticated?
     helper_method :authenticated?
     helper_method :email_address_pending_authentication
 
@@ -33,6 +34,10 @@ module Authentication
   private
     def authenticated?
       Current.identity.present?
+    end
+
+    def set_current_actor
+      Current.actor = Current.identity&.email_address || SystemActor.email
     end
 
     def require_account
