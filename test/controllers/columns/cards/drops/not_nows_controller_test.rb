@@ -8,10 +8,14 @@ class Columns::Cards::Drops::NotNowsControllerTest < ActionDispatch::Integration
   test "create" do
     card = cards(:logo)
 
-    client = mock
-    client.expects(:update_prior_status).with(card.id, card.beads_status.presence || "open")
-    client.expects(:defer_issue).with(card.id)
-    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+    status = stub(success?: true, exitstatus: 0)
+    seq = sequence("bd")
+    Open3.expects(:capture3)
+      .with("bd", "--actor", "kevin@example.com", "update", card.id.to_s, "--metadata", regexp_matches(/prior_status/))
+      .returns(["", "", status]).in_sequence(seq)
+    Open3.expects(:capture3)
+      .with("bd", "--actor", "kevin@example.com", "defer", card.id.to_s)
+      .returns(["", "", status]).in_sequence(seq)
 
       post columns_card_drops_not_now_path(card), as: :turbo_stream
       assert_response :success
