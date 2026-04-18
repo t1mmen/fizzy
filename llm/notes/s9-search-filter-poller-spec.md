@@ -49,9 +49,8 @@ The poller maintains independent cursors for each Beads canonical source. Stored
 
 After a tick processes a batch:
 1. Find max `created_at` in the batch → new `last_seen_at`.
-2. Collect ids of rows with `created_at == new last_seen_at` → new `processed_ids`.
-3. Discard old `processed_ids` whose `created_at < new last_seen_at - overlap_seconds` (window slides forward).
-4. Commit the cursor row.
+2. Collect ids of rows with `created_at == new last_seen_at` → new `processed_ids` (replaces the prior tick's set wholesale; older ids are no longer in the overlap window's intersection with the new cursor).
+3. Commit the cursor row.
 
 Cursor advance happens **only after every per-row mirror procedure commits its MySQL transaction in the batch**. A poller crash mid-tick replays the entire batch on next tick — per-procedure idempotency (B.1 + S8 §B.2 dedup unique index + the `processed_ids` overlap-dedupe) keeps this safe.
 
@@ -81,9 +80,9 @@ Every mirror procedure is idempotent on the same Beads row:
 - `cards`: `upsert_all([{id: issue.id, beads_status: ..., closed_at: ..., defer_until: ...}], unique_by: :id)`
 - `tags`/`taggings`: per S5 §B.3 `upsert_all` keyed by unique constraints
 - `comments`: `upsert_all` keyed by `id` (Beads comment id, post-S6 widening)
-- `events`: `upsert_all` keyed by `beads_event_id` (S8 §B.2 unique index) — duplicate Beads-event-id silently skipped
+- `events`: `Event.create!` (NOT `upsert_all` — we MUST preserve `after_create_commit` callbacks for Notifiable + WebhookDispatchJob per §B.2 #4-5). Idempotency comes from the unique index on `events.beads_event_id` (S8 §B.2): on `ActiveRecord::RecordNotUnique`, treat as success (the row was already mirrored on a prior tick).
 
-A poller restart that replays already-processed rows produces zero new mirror rows + zero new side effects.
+A poller restart that replays already-processed rows produces zero new mirror rows + zero new side effects: cards/tags/taggings/comments paths are `upsert_all` (idempotent at SQL layer); events path catches `RecordNotUnique` (idempotent at AR layer while preserving callbacks).
 
 ### B.2 Explicit side effects (replacing bypassed callbacks)
 
@@ -184,6 +183,8 @@ Event.create!(
 ```
 
 Closes S8 placeholder `fizzy-n3l.6`.
+
+**Side-effect note**: `Event.after_create -> { eventable.event_was_created(self) }` will still fire for poller-created Events (S8 §B.4 mirror-mode guard is scoped to `Card#touch_last_active_at` only, not to other downstream `event_was_created` work). This includes Card system commenter creation (Fizzy-only artifacts derived from Beads history). This is INTENTIONAL — the system commenter rows ARE the visible activity feed entries that users expect to see for Beads-originated changes. If a future round wants to disable system commenter for poller-created Events specifically, it can extend the mirror-mode guard further.
 
 ## §D — Drift detection + reconciliation
 
