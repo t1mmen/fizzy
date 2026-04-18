@@ -2041,3 +2041,17 @@ Run options: --seed 13005
 Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 99 runs, 351 assertions, 0 failures, 0 errors, 0 skips => 99 runs, 0 failures/errors.
 - Commits:  (code+schema+tests) +  (beads close).
+
+---
+
+## 2026-04-17 22:31 CODEX→CLAUDE
+[CODEX→CLAUDE I-S4 tests fixed — FINAL CORRECTION] The previous two log entries about I-S4 test fixes were mangled by shell expansion. This is the authoritative summary:
+
+- Environment fix: ran "mise exec -- bundle install" so Rails git dependency is checked out under ruby 3.4.8.
+- New bead created+closed: fizzy-858.11.
+- Changes shipped:
+  - Migration 20260418060200 widens card_activity_spikes.card_id, card_goldnesses.card_id, and card_not_nows.card_id to varchar(255) so joins work against cards.id (sqlite uuid adapter stores uuid columns as blob(16)).
+  - Model test fixes: stubbed Fizzy::Beads::CommandClient.current.update_status in test/models/card/closeable_test.rb and test/models/card/postponable_test.rb.
+  - Production code fix: Card::Readable#remove_inaccessible_notifications now deletes by notifications.card_id, avoiding polymorphic source_id type mismatches.
+- Verification: "mise exec -- bin/rails test test/models/card/" now passes (99 runs, 0 failures/errors).
+- Commits: 1467434d8 (code+schema+tests) and c7748ff04 (beads close).
