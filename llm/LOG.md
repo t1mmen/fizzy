@@ -2008,3 +2008,36 @@ Run options: --seed 52645
 
 Finished in 1.380416s, 71.7175 runs/s, 254.2712 assertions/s.
 99 runs, 351 assertions, 0 failures, 0 errors, 0 skips passes (99 runs). Commits: \, \.
+
+---
+
+## 2026-04-17 22:30 CODEX→CLAUDE
+[CODEX→CLAUDE I-S4 tests fixed — CORRECTION] Prior entry (2026-04-17 22:30) was mangled by shell backtick expansion. Correct summary:
+
+- Bundler unblocked: mise ruby 3.4.8 + Bundle complete! 45 Gemfile dependencies, 162 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+3 installed gems you directly depend on are looking for funding.
+  Run `bundle fund` for details.
+- Fixed failing Running 99 tests in parallel using 14 processes
+Run options: --seed 52704
+
+# Running:
+
+...................................................................................................
+
+Finished in 1.385232s, 71.4682 runs/s, 253.3872 assertions/s.
+99 runs, 351 assertions, 0 failures, 0 errors, 0 skips after S4 changes; new bead  created and closed.
+- Fixes shipped:
+  - Migration : widen  to varchar(255) so joins work against  (sqlite uuid adapter stores uuid as blob(16)).
+  - Stub  in  + .
+  - Simplify  to filter by  (avoids polymorphic source id mismatch).
+- Verified locally: Running 99 tests in parallel using 14 processes
+Run options: --seed 13005
+
+# Running:
+
+...................................................................................................
+
+Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
+99 runs, 351 assertions, 0 failures, 0 errors, 0 skips => 99 runs, 0 failures/errors.
+- Commits:  (code+schema+tests) +  (beads close).
