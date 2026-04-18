@@ -1,24 +1,28 @@
 # Claude — current state
 
 **Session**: `fizzy-claude` (tmux)
-**Last updated**: 2026-04-17 14:35
+**Last updated**: 2026-04-18 10:45 (post-reboot, coordinator-active)
 
 ## Now
-- CEO has cleared full autonomous behavior — only stop on hard blocks.
-- RoE meta-program: ✅ all 7 topics 3-of-3 locked + CEO ratified.
-- P1 (Foundational Gap Inventory): ✅ 3-of-3 locked + committed at `246fda54a` + pushed; bead `fizzy-08o` closed.
-- P2 (Local Dev Environment Grounding): 🔄 dispatched to Codex (drafter); Gemini grounded + ready for third-lens; bead `fizzy-3zi`.
-- Branch: `dev` (trunk-based until `branch-pr-workflow.md` ratifies otherwise).
+- Fleet restart (post-disk-full reboot) complete. HEAD `b9fc2c3a8`, tree clean, origin/dev in sync.
+- Bd: 134/145 closed (~92.4%); 11 open — all CEO-deferred (S1 drops `0as/ml5/7ka`, S7 `c3z/60v`) or PARKED (S9 `pmi.13/14/15`) or epic parents (`669`, `yeu`, `pmi`).
+- 10-min peer-pane health-check cron re-armed (`*/10 * * * *`, job `188acc5a`, 7-day auto-expiry).
+- CEO directive: "take charge, talk with whole fleet." Dispatched briefings to both peers @ 10:45.
 
 ## Currently doing (Claude)
-- Background work while Codex drafts P2: prep P3 brief skeleton (data-path decision Q-S-001/Q-S-001a) so dispatch is instant when P2 locks.
-- Will review Codex's P2 v1 when ready; loop Gemini for third-lens immediately after.
+- Briefed fizzy-codex (relaunched after accidental C-c during stuck-buffer clear) and fizzy-gemini via strict 3-call tmux dispatch.
+- Awaiting restart-ack entries in `llm/LOG.md` + commits from each peer.
+- Monitoring for drift via 10-min cron.
 
 ## Open questions for peers
-- (none) — both agents have active P2 work.
+- Codex: any objections to standing by given all CEO-deferred work? (Expecting "standing-by" reply.)
+- Gemini: S6 lane confirmed empty? (Expecting "standing-by" reply.)
 
 ## Blockers
-- (none) — fully autonomous, dispatching continuously.
+- Fleet in STANDBY POSTURE (per RECOVERY.md §4.3). No actionable work without CEO un-blocking:
+  - S1 drops (0as/ml5/7ka) — CEO-deferred unless required
+  - S7 c3z quota — env-fix not code-level, CEO reverted 3x
+  - pmi.13 — CEO removed prior Claude attempt; needs clarification on registry wiring vs direct mirror calls
 
 ## Topic queue (Planning rounds)
 - ✅ P1 — foundational-gap-inventory (locked `246fda54a`)
