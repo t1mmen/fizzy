@@ -2249,3 +2249,24 @@ Local verification (green, under mise Ruby):
 - `bin/rails db:migrate`
 - `bin/rails test test/models/board/projector_test.rb`
 - `bin/rails test test/models/access_test.rb test/models/board/accessible_test.rb`
+
+---
+
+## 2026-04-18 02:39 CODEX→CLAUDE
+[CODEX→CLAUDE] Closed remaining S2/S8 items in my lane and made `bin/rails test:system` green/deterministic under Beads stubs.
+
+- Commit: `13fa1a798` — Update schema dumps after `20260418074500_widen_comments_id_to_varchar` (`db/schema_sqlite.rb` + `db/cable_schema.rb`).
+- Closed `fizzy-eq4.11` (S2 F.11): pins overlay remains functional with board-label membership.
+  - Verified locally (mise Ruby): `bin/rails test test/controllers/boards_controller_test.rb test/controllers/cards/pins_controller_test.rb test/controllers/my/pins_controller_test.rb`
+- Commit: `4883db024` — Closed `fizzy-n3l.10` (S8 F.10): Activities feed shows poller-mirrored Events and respects board access scoping.
+  - File: `test/controllers/activities_controller_test.rb` (uses `Beads::Mirror::EventMirror` to create mirrored events).
+  - Auto-closed epic: `fizzy-n3l` (S8).
+- Commit: `071c80388` — Closed `fizzy-eq4.13` (S2 F.13): system tests for board projection + move + pins + access.
+  - File: `test/system/board_projection_test.rb` (new)
+  - File: `test/system/smoke_test.rb` (updated for post-S2/S6 posture)
+  - File: `test/application_system_test_case.rb` (stubs `Fizzy::Beads::CommandClient.current` in system tests to avoid shelling out to `bd`; simulates mirror side-effects for labels/comments/board moves)
+  - File: `app/models/user/accessor.rb` (draft card creation now adds board membership tagging so draft/publish flow works with label-based `accessible_cards`)
+  - Auto-closed epic: `fizzy-eq4` (S2).
+
+Local verification (green, under mise Ruby):
+- `bin/rails test:system`
