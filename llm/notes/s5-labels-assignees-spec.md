@@ -397,17 +397,17 @@ Cross-spec placeholder closed on S5 lock:
 
 | F.N | Bead | Title | Satisfies | Key dependencies |
 |---|---|---|---|---|
-| F.1 | `fizzy-h91.1` | Implement `LabelNormalizer` + unit tests | §E | none |
-| F.2 | `fizzy-h91.2` | Add `RESERVED_NAMESPACE` validation to `Tag` model | §D.2 | none |
-| F.3 | `fizzy-h91.3` | Add label methods to CommandClient (`add_label`, `remove_label`, `set_labels`) | §A.2, §C.1 | `fizzy-5jt`, `fizzy-r4v`, `fizzy-h91.1` |
-| F.4 | `fizzy-h91.4` | Add `set_assignee` method to CommandClient | §C.1, §F.3 | `fizzy-5jt`, `fizzy-r4v` |
-| F.5 | `fizzy-h91.5` | Add `_add_system_label` / `_remove_system_label` private methods | §C.4 | `fizzy-h91.3` |
-| F.6 | `fizzy-h91.6` | Rewire `Cards::TaggingsController#create/destroy` to use CommandClient | §G | `fizzy-h91.2`, `fizzy-h91.3`, `fizzy-3ad` |
-| F.7 | `fizzy-h91.7` | Add `Assignment` AR callbacks to mirror primary assignee to Beads | §F.3 | `fizzy-h91.4`, `fizzy-h6i` (S1 widening) |
-| F.8 | `fizzy-h91.8` | Tag deletion job: iterate issues + remove label + delete Tag | §J.5 | `fizzy-h91.3` |
-| F.9 | `fizzy-h91.9` | Integration tests: TaggingsController flow (create/destroy + 422 paths) | §I.2 | `fizzy-h91.6` |
-| F.10 | `fizzy-h91.10` | Integration tests: AssignmentsController flow + Beads sync | §I.2 | `fizzy-h91.7` |
-| F.11 | `fizzy-h91.11` | Close `fizzy-6iv` placeholder on S5 lock (one-line bd close) | §K, brief DoD | locks (manual on lock commit) |
+| F.1 | `fizzy-5yn` | Implement `LabelNormalizer` + unit tests | §E | none |
+| F.2 | `fizzy-13b` | Add `RESERVED_NAMESPACE` validation to `Tag` model | §D.2 | none |
+| F.3 | `fizzy-j1t` | Add label methods to CommandClient (`add_label`, `remove_label`, `set_labels`) | §A.2, §C.1 | `fizzy-5jt`, `fizzy-r4v`, `fizzy-5yn` |
+| F.4 | `fizzy-woh` | Add `set_assignee` method to CommandClient | §C.1, §F.3 | `fizzy-5jt`, `fizzy-r4v` |
+| F.5 | `fizzy-75i` | Add `_add_system_label` / `_remove_system_label` private methods | §C.4 | `fizzy-j1t` |
+| F.6 | `fizzy-69z` | Rewire `Cards::TaggingsController#create/destroy` to use CommandClient | §G | `fizzy-13b`, `fizzy-j1t`, `fizzy-3ad` |
+| F.7 | `fizzy-7dc` | Add `Assignment` AR callbacks to mirror primary assignee to Beads | §F.3 | `fizzy-woh`, `fizzy-h6i` (S1 widening) |
+| F.8 | `fizzy-ehj` | Tag deletion job: iterate issues + remove label + delete Tag | §J.5 | `fizzy-j1t` |
+| F.9 | `fizzy-4az` | Integration tests: TaggingsController flow (create/destroy + 422 paths) | §I.2 | `fizzy-69z` |
+| F.10 | `fizzy-jig` | Integration tests: AssignmentsController flow + Beads sync | §I.2 | `fizzy-7dc` |
+| F.11 | `fizzy-8kz` | Close `fizzy-6iv` placeholder on S5 lock (one-line bd close) | §K, brief DoD | locks (manual on lock commit) |
 
 ## §L — Validation checklist
 
