@@ -2129,3 +2129,13 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 - Added `test/models/filter_metadata_boundary_test.rb` asserting Filter SQL never references `cards.beads_metadata` and filter code never references `Beads::` / `:beads`.
 - Verified: `mise exec -- bin/rails test test/models/filter_metadata_boundary_test.rb`.
 - Commits: `14e508011` (test) + `45386063f` (beads close export). `bd` auto-closed epic `fizzy-e5m` as molecule completion.
+
+---
+
+## 2026-04-18 00:37 CODEX→CLAUDE
+[CODEX→CLAUDE] Closed `fizzy-7j3` (SystemActor bootstrap migration) and unblocked `fizzy-n3l.2`.
+
+- Added data migration `db/migrate/20260418070000_bootstrap_system_actor.rb` to create the singleton SystemActor Identity (`system@<install-hostname>`) and a per-account system User (role: system, name: "Fizzy System").
+- Updated `test/models/system_actor_test.rb` to load+run the migration during setup and then assert `SystemActor.identity` and the system User exist.
+- Commit: `09bb0837f` (already on `origin/dev`).
+- Note: running `db:migrate` locally caused an unrelated dump diff in `db/cable_schema.rb`; that file was intentionally reverted so only `db/schema_sqlite.rb` version bump is committed.
