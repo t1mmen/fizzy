@@ -69,7 +69,8 @@ tmux send-keys -t fizzy-claude 'claude' Enter   # adjust if your CLI launch is d
 
 # Session 2: fizzy-codex
 tmux new-session -d -s fizzy-codex -c /Users/timmstokke/work/fizzy
-tmux send-keys -t fizzy-codex 'codex' Enter      # adjust to your codex CLI
+tmux send-keys -t fizzy-codex "codex -c 'model=\"gpt-5.2\"' -c 'reasoning_effort=\"high\"'"
+sleep 0.25 && tmux send-keys -t fizzy-codex Enter
 
 # Session 3: fizzy-gemini
 tmux new-session -d -s fizzy-gemini -c /Users/timmstokke/work/fizzy
@@ -261,6 +262,8 @@ tail -50 llm/LOG.md                              # last entries should be pre-re
 | `comments.id` NOT NULL after edq.1 widening | `Comment.create!` fails with NOT NULL constraint | Add `before_create -> { self.id ||= ActiveRecord::Type::Uuid.generate }` to Comment (this session's fix) |
 | Module name shadowing within `Beads::Mirror` | `NoMethodError: find_or_create_by!` on sibling module | Rename ambiguous module (e.g. `Beads::Mirror::Event` → `Beads::Mirror::EventMirror`) |
 | Autostash loses untracked files | `git pull --rebase` autostash drops new files | Always `git add` then commit BEFORE pulling; never leave untracked deliverables |
+| Codex Rails/Bundler env mismatch | Bundler / Ruby errors when running tests locally | Always run rails commands under mise: `mise exec -- bin/rails test …` |
+| Codex LOG append corruption via shell expansion | LOG entry contains expanded backticks / command substitutions | Avoid heredoc-based log writing from shell; prefer `apply_patch` edits to `llm/LOG.md` |
 
 ---
 
