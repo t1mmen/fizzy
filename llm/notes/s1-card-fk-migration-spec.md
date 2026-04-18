@@ -218,19 +218,19 @@ The following child task beads will be created via `bd create` and wired with `b
 
 ## §I — Bead minting (executed during S1)
 
-All 22 child beads minted; 58 dependencies wired (22 parent-child to `fizzy-669` + 36 blocks per §A.2 ordering).
+All 23 child beads minted (v2: F.18b added per Gemini storage_entries catch); 60+ dependencies wired (23 parent-child to `fizzy-669` + ~37 blocks per §A.2 ordering).
 
-| Step | Bead id | Title |
+| Step | Bead id | Title (v2) |
 |---|---|---|
 | F.1 | `fizzy-m6r` | Add cards.beads_status column |
 | F.2 | `fizzy-7ka` | Drop card_goldnesses table |
 | F.3 | `fizzy-ml5` | Drop card_activity_spikes table |
 | F.4 | `fizzy-0as` | Drop card_not_nows table |
-| F.5 | `fizzy-flu` | Drop closures table |
-| F.6 | `fizzy-k48` | Drop taggings table |
-| F.7 | `fizzy-x2i` | Drop FK constraints from remaining child tables |
+| F.5 | `fizzy-flu` | Widen closures.card_id (v2: was drop) |
+| F.6 | `fizzy-k48` | Widen taggings.card_id (v2: was drop) |
+| F.7 | `fizzy-x2i` | Drop FK constraints from remaining child tables (assignments, closures, taggings, comments, steps, pins, watches, notifications) |
 | F.8 | `fizzy-h6i` | Widen assignments.card_id |
-| F.9 | `fizzy-0b8` | Widen comments.card_id + comments.id |
+| F.9 | `fizzy-0b8` | Widen comments.card_id (v2: comments.id NOT widened; S6 owns) |
 | F.10 | `fizzy-daf` | Widen steps.card_id |
 | F.11 | `fizzy-4wm` | Widen pins.card_id |
 | F.12 | `fizzy-it5` | Widen watches.card_id |
@@ -240,9 +240,10 @@ All 22 child beads minted; 58 dependencies wired (22 parent-child to `fizzy-669`
 | F.16 | `fizzy-hrf` | Widen reactions.reactable_id (polymorphic) |
 | F.17 | `fizzy-jzw` | Widen action_text_rich_texts.record_id (polymorphic) |
 | F.18 | `fizzy-cjs` | Widen active_storage_attachments.record_id (polymorphic) |
-| F.19 | `fizzy-n9l` | Widen search_records_0..15 searchable_id (16 shards) |
+| F.18b | `fizzy-0ic` | Widen storage_entries.recordable_id (polymorphic; v2 added per Gemini catch) |
+| F.19 | `fizzy-n9l` | Widen search_records_0..15: card_id AND searchable_id (16 shards each; v2 fix) |
 | F.20 | `fizzy-05q` | Widen cards.id PK (keystone) |
-| F.21 | `fizzy-i2m` | Re-add FK constraints |
+| F.21 | `fizzy-i2m` | Re-add FK constraints (assignments, closures, taggings, comments, steps, pins, watches, notifications) |
 | F.22 | `fizzy-iwk` | Schema verification + rollback test |
 
 Verification commands:
