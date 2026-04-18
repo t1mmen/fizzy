@@ -3,6 +3,13 @@ require "test_helper"
 class Card::PostponableTest < ActiveSupport::TestCase
   setup do
     Current.session = sessions(:david)
+
+    # Post-S4: Card::Postponable flows through Card::Triageable#send_back_to_triage,
+    # which now shells out to bd via CommandClient.update_status. Model tests
+    # should never invoke bd.
+    client = mock("beads_client")
+    client.stubs(:update_status)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
   end
 
   test "check the postponed status of a card" do

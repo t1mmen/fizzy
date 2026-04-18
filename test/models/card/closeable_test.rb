@@ -3,6 +3,11 @@ require "test_helper"
 class Card::CloseableTest < ActiveSupport::TestCase
   setup do
     Current.session = sessions(:david)
+
+    # Post-S4: Card::Postponable -> send_back_to_triage shells out to bd.
+    client = mock("beads_client")
+    client.stubs(:update_status)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
   end
 
   test "closed scope" do

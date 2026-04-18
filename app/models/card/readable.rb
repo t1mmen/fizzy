@@ -11,9 +11,10 @@ module Card::Readable
 
   def remove_inaccessible_notifications
     accessible_user_ids = board.accesses.pluck(:user_id)
-    notification_sources.each do |sources|
-      inaccessible_notifications_from(sources, accessible_user_ids).in_batches.destroy_all
-    end
+    # Notifications are always card-scoped via notifications.card_id, so
+    # don't attempt to match by polymorphic source relations (Event/Mention
+    # ids may be stored in non-comparable formats across adapters).
+    Notification.where(card: self).where.not(user_id: accessible_user_ids).in_batches.destroy_all
   end
 
   private

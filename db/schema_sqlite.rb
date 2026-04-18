@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_232000) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_18_060200) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -202,7 +202,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_232000) do
 
   create_table "card_activity_spikes", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_card_activity_spikes_on_account_id"
@@ -211,7 +211,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_232000) do
 
   create_table "card_goldnesses", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_card_goldnesses_on_account_id"
@@ -220,7 +220,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_232000) do
 
   create_table "card_not_nows", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id"
@@ -234,7 +234,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_232000) do
     t.json "beads_metadata"
     t.string "beads_status", limit: 32
     t.uuid "board_id", null: false
-    t.text "close_reason", limit: 65535
+    t.text "close_reason"
     t.datetime "closed_at"
     t.uuid "column_id"
     t.datetime "created_at", null: false
@@ -280,7 +280,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_232000) do
     t.uuid "board_id", null: false
     t.string "color", limit: 255, null: false
     t.datetime "created_at", null: false
-    t.string "match_label", limit: 255
+    t.string "match_label"
     t.string "name", limit: 255, null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
