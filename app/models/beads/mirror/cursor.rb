@@ -38,6 +38,32 @@ module Beads
       def self.for(source)
         find_or_create_by!(source: source)
       end
+
+      # Per S9 §A.1 + §A.4 — orchestrator called by BeadsPoller#perform.
+      # For each known source, invokes its per-source mirror procedure.
+      # Per-source procedures (pmi.3-pmi.7) are wired in via the dispatch
+      # registry below as they ship; until then a source's entry is a stub
+      # that increments the cursor's last_advanced_at and logs.
+      def self.advance_all
+        SOURCES.each do |source|
+          cursor = self.for(source)
+          procedure = PROCEDURES.fetch(source, ->(_) { stub_advance(_) })
+          procedure.call(cursor)
+        rescue => e
+          Rails.logger.error "[BeadsPoller] source=#{source} failed: #{e.class}: #{e.message}"
+        end
+      end
+
+      SOURCES = [ EVENTS, COMMENTS, ISSUES_SNAPSHOT ].freeze
+
+      # Per-source procedure registry. pmi.3 (mirror_issue), pmi.5 (label
+      # delta), pmi.6 (comment mirror), pmi.7 (event mirror) wire entries
+      # here as they ship. Until then, all sources hit stub_advance.
+      PROCEDURES = {}
+
+      def self.stub_advance(cursor)
+        cursor.update!(last_advanced_at: Time.current)
+      end
     end
   end
 end
