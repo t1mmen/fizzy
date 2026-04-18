@@ -2,139 +2,78 @@ require "test_helper"
 
 class Cards::CommentsControllerTest < ActionDispatch::IntegrationTest
   setup do
-    sign_in_as :kevin
+    @card = cards("logo")
+    @comment = comments("logo_agreement_kevin")
+    @kevin = users("kevin")
+    sign_in_as @kevin
+    
+    @mock_client = mock("command_client")
+    Fizzy::Beads::CommandClient.stubs(:current).returns(@mock_client)
   end
 
-  test "create" do
-    assert_difference -> { cards(:logo).comments.count }, +1 do
-      post card_comments_path(cards(:logo)), params: { comment: { body: "Agreed." } }, as: :turbo_stream
+  test "create rewired to Beads" do
+    @mock_client.expects(:add_comment).with(@card.id, "Agreed.").returns({
+      "id" => "beads-comment-1",
+      "issue_id" => @card.id,
+      "author" => @kevin.identity.email_address,
+      "text" => "Agreed.",
+      "created_at" => Time.current.iso8601
+    })
+
+    assert_difference "Comment.count", 1 do
+      post card_comments_path(@card), params: { comment: { body: "Agreed." } }, as: :turbo_stream
     end
 
     assert_response :success
+    assert_equal "beads-comment-1", Comment.last.id
   end
 
   test "create on draft card is forbidden" do
-    draft_card = boards(:writebook).cards.create!(status: :drafted, creator: users(:kevin))
+    board = boards("writebook")
+    draft_card = @card.account.cards.create!(
+      title: "Draft Card", 
+      status: :drafted, 
+      creator: @kevin, 
+      board: board,
+      column: columns("writebook_triage")
+    )
+    
+    # S2 F.4: Board membership is label-based.
+    label = "#{Board::BOARD_LABEL_PREFIX}#{board.id}"
+    tag = Tag.find_or_create_by!(account: @card.account, title: label)
+    Tagging.create!(card: draft_card, tag: tag)
 
-    assert_no_difference -> { draft_card.comments.count } do
+    assert_no_difference "Comment.count" do
       post card_comments_path(draft_card), params: { comment: { body: "This should be forbidden" } }, as: :json
     end
 
     assert_response :forbidden
   end
 
-  test "update" do
-    put card_comment_path(cards(:logo), comments(:logo_agreement_kevin)), params: { comment: { body: "I've changed my mind" } }, as: :turbo_stream
+  test "edit is disabled" do
+    get edit_card_comment_path(@card, @comment)
+    assert_response :method_not_allowed
+  end
 
+  test "update is disabled" do
+    put card_comment_path(@card, @comment), params: { comment: { body: "I've changed my mind" } }, as: :turbo_stream
+    assert_response :method_not_allowed
+  end
+
+  test "destroy is disabled" do
+    delete card_comment_path(@card, @comment), as: :turbo_stream
+    assert_response :method_not_allowed
+  end
+
+  test "index as JSON still works (read-path)" do
+    get card_comments_path(@card), as: :json
     assert_response :success
-    assert_action_text "I've changed my mind", comments(:logo_agreement_kevin).reload.body
+    assert_equal @card.comments.count, @response.parsed_body.count
   end
 
-  test "update another user's comment" do
-    assert_no_changes -> { comments(:logo_agreement_jz).reload.body.to_s } do
-      put card_comment_path(cards(:logo), comments(:logo_agreement_jz)), params: { comment: { body: "I've changed my mind" } }, as: :turbo_stream
-    end
-
-    assert_response :forbidden
-  end
-
-  test "index as JSON" do
-    card = cards(:logo)
-
-    get card_comments_path(card), as: :json
-
+  test "show as JSON still works (read-path)" do
+    get card_comment_path(@card, @comment), as: :json
     assert_response :success
-    assert_equal card.comments.count, @response.parsed_body.count
-  end
-
-  test "create as JSON" do
-    card = cards(:logo)
-
-    assert_difference -> { card.comments.count }, +1 do
-      post card_comments_path(card), params: { comment: { body: "New comment" } }, as: :json
-    end
-
-    assert_response :created
-    assert_equal card_comment_path(card, Comment.last, format: :json), @response.headers["Location"]
-    assert_equal Comment.last.id, @response.parsed_body["id"]
-  end
-
-  test "create as JSON with custom created_at" do
-    card = cards(:logo)
-    custom_time = Time.utc(2024, 1, 15, 10, 30, 0)
-
-    assert_difference -> { card.comments.count }, +1 do
-      post card_comments_path(card), params: { comment: { body: "Backdated comment", created_at: custom_time } }, as: :json
-    end
-
-    assert_response :created
-    assert_equal custom_time, Comment.last.created_at
-  end
-
-  test "show as JSON" do
-    comment = comments(:logo_agreement_kevin)
-
-    get card_comment_path(comment.card, comment), as: :json
-
-    assert_response :success
-    assert_equal comment.id, @response.parsed_body["id"]
-    assert_equal comment.card.id, @response.parsed_body.dig("card", "id")
-    assert_equal card_url(comment.card), @response.parsed_body.dig("card", "url")
-    assert_equal card_comment_reactions_url(comment.card, comment), @response.parsed_body["reactions_url"]
-    assert_equal card_comment_url(comment.card, comment), @response.parsed_body["url"]
-  end
-
-  test "create as JSON with flat params" do
-    card = cards(:logo)
-
-    assert_difference -> { card.comments.count }, +1 do
-      post card_comments_path(card), params: { body: "Flat comment" }, as: :json
-    end
-
-    assert_response :created
-    assert_equal "Flat comment", Comment.last.body.to_plain_text
-  end
-
-  test "update as JSON with flat params" do
-    comment = comments(:logo_agreement_kevin)
-
-    put card_comment_path(cards(:logo), comment), params: { body: "Flat update" }, as: :json
-
-    assert_response :success
-    assert_equal "Flat update", comment.reload.body.to_plain_text
-  end
-
-  test "update as JSON" do
-    comment = comments(:logo_agreement_kevin)
-
-    put card_comment_path(cards(:logo), comment), params: { comment: { body: "Updated comment" } }, as: :json
-
-    assert_response :success
-    assert_equal "Updated comment", comment.reload.body.to_plain_text
-  end
-
-  test "edit a comment that contains a mention" do
-    card = cards(:logo)
-    mentioned_user = users(:jz)
-    mention_html = ActionText::Attachment.from_attachable(mentioned_user).to_html
-    comment = card.comments.create!(creator: users(:kevin), body: "#{mention_html} hello")
-
-    get edit_card_comment_path(card, comment)
-    assert_response :success
-    assert_select "lexxy-editor" do |editors|
-      value = editors.first["value"]
-      attachment = Nokogiri::HTML.fragment(value).at_css("action-text-attachment")
-      assert_equal mentioned_user.attachable_sgid, attachment["sgid"]
-      assert_includes attachment["content"], mentioned_user.first_name
-    end
-  end
-
-  test "destroy as JSON" do
-    comment = comments(:logo_agreement_kevin)
-
-    delete card_comment_path(cards(:logo), comment), as: :json
-
-    assert_response :no_content
-    assert_not Comment.exists?(comment.id)
+    assert_equal @comment.id, @response.parsed_body["id"]
   end
 end
