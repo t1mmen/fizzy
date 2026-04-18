@@ -73,7 +73,7 @@ tmux send-keys -t fizzy-codex 'codex' Enter      # adjust to your codex CLI
 
 # Session 3: fizzy-gemini
 tmux new-session -d -s fizzy-gemini -c /Users/timmstokke/work/fizzy
-tmux send-keys -t fizzy-gemini 'gemini' Enter    # adjust to your gemini CLI
+tmux send-keys -t fizzy-gemini 'gemini' Enter    # Starts the interactive Gemini CLI
 ```
 
 Attach in three terminals (or three iTerm2 tabs):
@@ -253,7 +253,7 @@ tail -50 llm/LOG.md                              # last entries should be pre-re
 | Failure | Symptom | Recovery |
 |---|---|---|
 | Disk full (>99%) | `ENOSPC` on Bash tool output | `rm -rf /private/tmp/claude-501/*/tasks/*.output` (safe scratch); `brew cleanup`; `du -sh ~/Library/Caches/* | sort -h | tail -20` to find offenders |
-| Gemini in shell mode | `! ` prefix in input box, `shell mode enabled` indicator | Send `Escape`, then corrective dispatch (no leading `!` in body) |
+| Gemini in shell mode | `! ` prefix in input box, `shell mode enabled` indicator | Send `Escape`, then corrective dispatch (no leading `!` in body). **Trigger**: any message body starting with `!` or containing certain shell operators. |
 | Stuck paste buffer | Message visible in input box, no Working indicator | Send a separate `Enter` keystroke |
 | Peer drops migration without code cleanup | `load_schema!` errors, app boot fails | Forward-restore migration that re-creates the table; reopen the original drop bead with prerequisite cleanup notes |
 | Schema regression drift | `db/cable_schema.rb` + `db/schema_sqlite.rb` change after peer's migration | Discard with `git checkout db/cable_schema.rb db/schema_sqlite.rb` — these are cross-adapter artifacts |
