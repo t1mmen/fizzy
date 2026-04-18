@@ -180,6 +180,28 @@ module Fizzy
         end
       end
 
+      # ------------------------------------------------------------------
+      # S10 F.4 — metadata.fizzy.* writes (per S10 §D.1)
+      # All writes to Beads metadata go through here. The fizzy_keys must be
+      # a Hash whose keys live under metadata.fizzy.*. We REPLACE the entire
+      # metadata.fizzy bucket atomically (REPLACE semantics per S10 §E.1
+      # decision in fizzy-e5m.1) — Beads metadata.* keys outside `fizzy`
+      # are NOT touched.
+      # ------------------------------------------------------------------
+
+      def update_fizzy_metadata(issue_id, fizzy_keys)
+        raise ArgumentError, "fizzy_keys must be a Hash" unless fizzy_keys.is_a?(Hash)
+        # Deep-stringify so symbol keys don't smuggle in odd JSON.
+        sanitized = fizzy_keys.to_h { |k, v| [ k.to_s, v ] }
+        payload = JSON.dump({ "fizzy" => sanitized })
+        invoke!([ "update", issue_id.to_s, "--metadata", payload ])
+      end
+
+      # Convenience for known prior_status key (S4 §F.2 reopen/restore).
+      def update_prior_status(issue_id, status)
+        update_fizzy_metadata(issue_id, prior_status: status.to_s)
+      end
+
       private
 
       def with_tempfile(content)
