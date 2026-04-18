@@ -216,7 +216,40 @@ The following child task beads will be created via `bd create` and wired with `b
 
 ## §I — Bead minting (executed during S1)
 
-(To be populated as `bd create` calls run. Each child gets full perfect-bead fields per RoE-4 §5: title verb-led, description=WHY, design=HOW, acceptance=WHAT verifiable, type, priority, labels, assignee, dependencies via `bd dep add ... --type parent-child` to fizzy-669 + `--type blocks` per §H ordering.)
+All 22 child beads minted; 58 dependencies wired (22 parent-child to `fizzy-669` + 36 blocks per §A.2 ordering).
+
+| Step | Bead id | Title |
+|---|---|---|
+| F.1 | `fizzy-m6r` | Add cards.beads_status column |
+| F.2 | `fizzy-7ka` | Drop card_goldnesses table |
+| F.3 | `fizzy-ml5` | Drop card_activity_spikes table |
+| F.4 | `fizzy-0as` | Drop card_not_nows table |
+| F.5 | `fizzy-flu` | Drop closures table |
+| F.6 | `fizzy-k48` | Drop taggings table |
+| F.7 | `fizzy-x2i` | Drop FK constraints from remaining child tables |
+| F.8 | `fizzy-h6i` | Widen assignments.card_id |
+| F.9 | `fizzy-0b8` | Widen comments.card_id + comments.id |
+| F.10 | `fizzy-daf` | Widen steps.card_id |
+| F.11 | `fizzy-4wm` | Widen pins.card_id |
+| F.12 | `fizzy-it5` | Widen watches.card_id |
+| F.13 | `fizzy-2ae` | Widen notifications.card_id + source_id |
+| F.14 | `fizzy-rpt` | Widen events.eventable_id (polymorphic) |
+| F.15 | `fizzy-33r` | Widen mentions.source_id (polymorphic) |
+| F.16 | `fizzy-hrf` | Widen reactions.reactable_id (polymorphic) |
+| F.17 | `fizzy-jzw` | Widen action_text_rich_texts.record_id (polymorphic) |
+| F.18 | `fizzy-cjs` | Widen active_storage_attachments.record_id (polymorphic) |
+| F.19 | `fizzy-n9l` | Widen search_records_0..15 searchable_id (16 shards) |
+| F.20 | `fizzy-05q` | Widen cards.id PK (keystone) |
+| F.21 | `fizzy-i2m` | Re-add FK constraints |
+| F.22 | `fizzy-iwk` | Schema verification + rollback test |
+
+Verification commands:
+
+```
+bd show fizzy-669       # see epic with all 22 children
+bd ready                # F.1 (fizzy-m6r) is the only currently-unblocked work
+bd graph fizzy-669      # render dependency DAG
+```
 
 ---
 
