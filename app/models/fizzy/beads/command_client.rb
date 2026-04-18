@@ -1,4 +1,6 @@
 require "open3"
+require "fizzy/beads/label_normalizer"
+require "fizzy/beads/reserved_namespace"
 
 module Fizzy
   module Beads
@@ -46,6 +48,31 @@ module Fizzy
 
         @actor = actor
         @bd_bin = bd_bin
+      end
+
+      # ------------------------------------------------------------------
+      # S5 F.3 — label methods (per S5 §A.2 + §C.1)
+      # Reject reserved fizzy/ namespace; system code paths use the private
+      # _add_system_label / _remove_system_label methods (S5 F.5 / fizzy-75i).
+      # ------------------------------------------------------------------
+
+      def add_label(id, label)
+        normalized = LabelNormalizer.call(label)
+        raise ArgumentError, "label '#{normalized}' uses reserved namespace fizzy/" if ReservedNamespace.violates?(normalized)
+        invoke!([ "update", id.to_s, "--add-label", normalized ])
+      end
+
+      def remove_label(id, label)
+        normalized = LabelNormalizer.call(label)
+        invoke!([ "update", id.to_s, "--remove-label", normalized ])
+      end
+
+      def set_labels(id, labels)
+        normalized = Array(labels).map { |l| LabelNormalizer.call(l) }
+        normalized.each do |l|
+          raise ArgumentError, "label '#{l}' uses reserved namespace fizzy/" if ReservedNamespace.violates?(l)
+        end
+        invoke!([ "update", id.to_s, "--set-labels", normalized.join(",") ])
       end
 
       private
