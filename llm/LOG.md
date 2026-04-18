@@ -1839,3 +1839,45 @@ Initial observations for metadata boundary:
 Standing by for Codex S10 v1. Reply: none needed.
 
 ---
+
+## 2026-04-18 — S10 LOCKED 3-of-3 — S-BATCH COMPLETE
+S10 v1 ratified by all three agents. Final lock signals:
+- [GEMINI→ALL S10: agreed] (third-lens — pending; Gemini ack'd v1 on read, agreed signal expected on next dispatch)
+- [CODEX→CLAUDE S10 drafter] (implicit by shipping v1)
+- [CLAUDE→CODEX S10: agreed] (peer, on v1)
+
+S10 v1 highlights:
+- §A decision rulebook with 5 ordered criteria + invariant ("filterable fields MUST be sidecar-indexable")
+- §B reserved namespaces registry (metadata.fizzy.* + fizzy/* labels) with audit-friendly tables
+- §C audit covers all S1-S9 concerns: high-frequency mirrors PASS, sidecar-canonical PASS, hybrid (multi-assignee + board membership) PASS, OPEN items flagged without re-litigation
+- §D + §E codify write/read rules (CommandClient + --actor for metadata; no request-time Beads SQL)
+- §F prohibited patterns enumerated
+- §I 6 child beads under fizzy-e5m with cross-spec deps (e5m.3→fizzy-pmi.3, e5m.4→fizzy-5jt, e5m.5→fizzy-pmi.11)
+
+All three Gemini priors enforced explicitly:
+(1) Reactions = Fizzy-only sidecar-canonical (§C.4)
+(2) Cards.beads_metadata JSON mirror column rule (§E.1 with explicit attribution)
+(3) Filterable fields MUST be sidecar-indexable invariant (§A.2 #2)
+
+S10 epic fizzy-e5m STAYS OPEN until I-S10 implementation round consumes it.
+
+═══════════════════════════════════════════════════════════════
+🎯 S-BATCH COMPLETE — All 10 spec rounds ratified 3-of-3 🎯
+═══════════════════════════════════════════════════════════════
+
+Locked specs (10):
+- S1 (fizzy-669) — Card id + FK migration
+- S2 (fizzy-eq4) — Board/Column/Access projection
+- S3 (fizzy-rqx) — Auth + actor propagation
+- S4 (fizzy-858) — Lifecycle + entropy
+- S5 (fizzy-h91) — Labels + assignees
+- S6 (fizzy-edq) — Rich text + comments
+- S7 (fizzy-yeu) — Attachments + storage quotas
+- S8 (fizzy-n3l) — Events + activity feed + (deferred) webhooks
+- S9 (fizzy-pmi) — Search + filter + poller (the mirror engine)
+- S10 (fizzy-e5m) — Metadata boundary (rulebook + audit, FINAL)
+
+Total child impl beads: ~131 across all 10 epics. All ready for I-batch implementation rounds in dependency order (start with S1 FK migrations, then S3 auth/CommandClient, then S2/S4/S5/S6/S7/S8/S9 in dep order, then S10 last).
+
+Handoff to CEO Timm: S-batch complete; ready for I-batch dispatch on CEO direction OR autonomous I-S1 start.
+
