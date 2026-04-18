@@ -9,6 +9,7 @@ class Columns::Cards::Drops::ClosuresControllerTest < ActionDispatch::Integratio
     card = cards(:logo)
 
     client = mock
+    client.expects(:update_prior_status).with(card.id, card.beads_status.presence || "open")
     client.expects(:close_issue).with(card.id)
     Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 

@@ -9,6 +9,7 @@ class Columns::Cards::Drops::NotNowsControllerTest < ActionDispatch::Integration
     card = cards(:logo)
 
     client = mock
+    client.expects(:update_prior_status).with(card.id, card.beads_status.presence || "open")
     client.expects(:defer_issue).with(card.id)
     Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 

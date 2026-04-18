@@ -9,6 +9,7 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
     card = cards(:logo)
 
     client = mock
+    client.expects(:update_prior_status).with(card.id, card.beads_status.presence || "open")
     client.expects(:close_issue).with(card.id)
     Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
@@ -22,7 +23,8 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
     card = cards(:shipping)
 
     client = mock
-    client.expects(:reopen_issue).with(card.id)
+    client.expects(:read_issue).with(card.id).returns({ "metadata" => { "fizzy" => { "prior_status" => "in_progress" } } })
+    client.expects(:reopen_issue).with(card.id, restore_status: "in_progress")
     Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
     assert_changes -> { card.reload.closed? }, from: true, to: false do
@@ -37,6 +39,7 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
     assert_not card.closed?
 
     client = mock
+    client.expects(:update_prior_status).with(card.id, card.beads_status.presence || "open")
     client.expects(:close_issue).with(card.id)
     Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
@@ -52,7 +55,8 @@ class Cards::ClosuresControllerTest < ActionDispatch::IntegrationTest
     assert card.closed?
 
     client = mock
-    client.expects(:reopen_issue).with(card.id)
+    client.expects(:read_issue).with(card.id).returns({ "metadata" => { "fizzy" => { "prior_status" => "in_progress" } } })
+    client.expects(:reopen_issue).with(card.id, restore_status: "in_progress")
     Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
     delete card_closure_path(card), as: :json
