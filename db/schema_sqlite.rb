@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_205100) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_205600) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -256,13 +256,16 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_205100) do
 
   create_table "columns", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
+    t.string "beads_status", limit: 32
     t.uuid "board_id", null: false
     t.string "color", limit: 255, null: false
     t.datetime "created_at", null: false
+    t.string "match_label"
     t.string "name", limit: 255, null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_columns_on_account_id"
+    t.index ["beads_status"], name: "index_columns_on_beads_status"
     t.index ["board_id", "position"], name: "index_columns_on_board_id_and_position"
     t.index ["board_id"], name: "index_columns_on_board_id"
   end
@@ -299,6 +302,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_205100) do
   create_table "events", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
     t.string "action", limit: 255, null: false
+    t.string "beads_event_id"
     t.uuid "board_id", null: false
     t.datetime "created_at", null: false
     t.uuid "creator_id", null: false
@@ -307,6 +311,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_205100) do
     t.json "particulars", default: -> { "json_object()" }
     t.datetime "updated_at", null: false
     t.index ["account_id", "action"], name: "index_events_on_account_id_and_action"
+    t.index ["beads_event_id"], name: "index_events_on_beads_event_id", unique: true
     t.index ["board_id", "action", "created_at"], name: "index_events_on_board_id_and_action_and_created_at"
     t.index ["board_id"], name: "index_events_on_board_id"
     t.index ["creator_id"], name: "index_events_on_creator_id"
