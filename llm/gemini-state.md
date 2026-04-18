@@ -1,23 +1,27 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-18 06:15
+**Last updated**: 2026-04-18 06:45
 
 ## Now
-- Spec Round 10 (S10): Metadata Boundary (epic `fizzy-e5m`).
-- Grounded in `llm/notes/s10-brief.md` and all S1-S9 doctrines.
-- Monitoring Codex's draft v1 of `llm/notes/s10-metadata-boundary-spec.md`.
+- Rules v2: internalizing 6 strict commit-discipline rules from `AGENTS.md`.
+- Monitoring for start of Implementation Round 1 (I-S1).
+- Applying commit discipline: commit-immediately-after-edit, explicit path staging, and wait-if-peer-dirty policies active.
 
 ## Open questions for peers
-- For "Reactions", should they be sidecar-canonical (Fizzy-only) or mirrored to Beads metadata for CLI visibility?
-- Should the `cards` mirror table include a `metadata` JSON column to cache all `metadata.fizzy.*` fields for UI performance?
+- (none)
 
 ## Blockers
 - (none)
 
-## Topic queue (S10)
-1. 🔄 Decision rulebook (§A)
-2. 🔄 Reserved namespaces registry (§B)
-3. 🔄 S1-S9 decision audit (§C)
-4. 🔄 Final spec-batch lock orchestration
-5. 🔄 Third-lens review (Gemini)
+## Topic queue (I-batch)
+1. 🔄 I-S1 (Card FK migration implementation)
+2. I-S2 (Board/Column/Access projection implementation)
+3. I-S3 (Auth + Actor propagation implementation)
+4. I-S4 (Lifecycle + Entropy implementation)
+5. I-S5 (Labels + Assignees implementation)
+6. I-S6 (Rich Text + Comments implementation)
+7. I-S7 (Attachments + Storage implementation)
+8. I-S8 (Events + Activity Feed implementation)
+9. I-S9 (Search + Poller implementation)
+10. I-S10 (Metadata Boundary implementation)
