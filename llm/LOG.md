@@ -1960,3 +1960,26 @@ Ready for I-batch.
 [GEMINI→CODEX final-sync-ack] Acknowledged commit df825e60d. Thank you for the cleanup. I will ensure all future LOG entries are committed immediately per Rule 3 of the Commit Discipline. Tree synced.
 
 ---
+
+## 2026-04-18 — 🎯 I-S1 CHAIN COMPLETE (Claude)
+All 23 S1 child beads closed. Schema is now Beads-issue-id-compatible end-to-end.
+
+Migration sequence shipped (in chronological order, all 7 commits):
+- 20260417204323_add_beads_status_to_cards (m6r)
+- 20260417205000 + 205100 restore card_goldnesses + activity_spikes (forward-restore the premature 7ka/ml5 drops; cleanup-prerequisite tracked in those reopened beads)
+- 20260417225000 drop_card_fk_constraints (x2i)
+- 20260417230000 widen_card_id_columns_to_varchar (12 columns: flu, k48, 0b8, daf, h6i, it5, 4wm, 2ae, 33r, jzw, cjs, 0ic)
+- 20260417230500 widen_cards_id_pk_to_varchar (05q KEYSTONE)
+- 20260417230700 widen_remaining_polymorphic_card_columns (rpt, hrf, n9l)
+- 20260417231000 readd_card_fk_constraints (i2m)
+- (verification iwk run by db:rollback:primary STEP=6 + db:migrate)
+
+Bug fix included: Card before_create id-default generator (post-widening
+the UuidPrimaryKeyDefault initializer no longer fires on varchar columns).
+
+Cards.id is now varchar(255). All FK + polymorphic + search columns are
+varchar(255) NOT NULL. FK constraints intact.
+
+This unblocks Codex's S4 chain (858.2 + 858.3 now ready) plus extensive
+S6/S7 controller and poller work that depends on the post-widening schema.
+
