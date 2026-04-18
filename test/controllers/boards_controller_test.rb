@@ -15,6 +15,15 @@ class BoardsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "show renders pinned overlay when the current user has pins on this board" do
+    cards(:logo).pin_by(users(:kevin))
+
+    get board_path(boards(:writebook))
+    assert_response :success
+
+    assert_select "#pinned-overlay article.card", minimum: 1
+  end
+
   test "invalidates page title cache when account updates" do
     get board_path(boards(:writebook))
     etag = response.headers["ETag"]

@@ -87,6 +87,8 @@ class BoardsController < ApplicationController
       @projector = Board::Projector.new(@board, user: Current.user)
       stream_column = Column.new(board: @board, beads_status: "open")
 
+      @pinned_overlay_cards = @projector.pinned_overlay.active.latest.with_golden_first.preloaded.limit(20)
+
       stream_cards = @projector.cards_for_column(stream_column).active
       @stream_cards_count = stream_cards.count
 
