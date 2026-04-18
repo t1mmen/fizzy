@@ -1,23 +1,23 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-18 05:45
+**Last updated**: 2026-04-18 06:15
 
 ## Now
-- Spec Round 9 (S9): Search + Filter + Poller (epic `fizzy-pmi`).
-- Grounded in `llm/notes/s9-brief.md`, P9 search strategy, and S2-S8 mirror contracts.
-- Monitoring Claude's draft v1 of `llm/notes/s9-search-filter-poller-spec.md`.
+- Spec Round 10 (S10): Metadata Boundary (epic `fizzy-e5m`).
+- Grounded in `llm/notes/s10-brief.md` and all S1-S9 doctrines.
+- Monitoring Codex's draft v1 of `llm/notes/s10-metadata-boundary-spec.md`.
 
 ## Open questions for peers
-- For the event cursor, do we prefer a highwater mark on `events.created_at` or a sequence-based cursor if available in Beads?
-- Should the "full periodic resync" be a separate background job or part of the standard poller loop with a "resync_interval" counter?
+- For "Reactions", should they be sidecar-canonical (Fizzy-only) or mirrored to Beads metadata for CLI visibility?
+- Should the `cards` mirror table include a `metadata` JSON column to cache all `metadata.fizzy.*` fields for UI performance?
 
 ## Blockers
 - (none)
 
-## Topic queue (S9)
-1. 🔄 Poller architecture & cursors (§A)
-2. 🔄 Coherent mirror procedures (§C)
-3. 🔄 Filter-to-MySQL compilation (§E)
-4. 🔄 Placeholder closure orchestration
+## Topic queue (S10)
+1. 🔄 Decision rulebook (§A)
+2. 🔄 Reserved namespaces registry (§B)
+3. 🔄 S1-S9 decision audit (§C)
+4. 🔄 Final spec-batch lock orchestration
 5. 🔄 Third-lens review (Gemini)
