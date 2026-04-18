@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_230500) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_230700) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -315,7 +315,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_230500) do
     t.uuid "board_id", null: false
     t.datetime "created_at", null: false
     t.uuid "creator_id", null: false
-    t.uuid "eventable_id", null: false
+    t.string "eventable_id", limit: 255, null: false
     t.string "eventable_type", limit: 255, null: false
     t.json "particulars", default: -> { "json_object()" }
     t.datetime "updated_at", null: false
@@ -464,7 +464,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_230500) do
     t.uuid "account_id", null: false
     t.string "content", limit: 16, null: false
     t.datetime "created_at", null: false
-    t.uuid "reactable_id", null: false
+    t.string "reactable_id", limit: 255, null: false
     t.string "reactable_type", limit: 255, null: false
     t.uuid "reacter_id", null: false
     t.datetime "updated_at", null: false
@@ -488,10 +488,10 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_230500) do
   create_table "search_records", force: :cascade do |t|
     t.uuid "account_id", null: false
     t.uuid "board_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.text "content", limit: 65535
     t.datetime "created_at", null: false
-    t.uuid "searchable_id", null: false
+    t.string "searchable_id", limit: 255, null: false
     t.string "searchable_type", limit: 255, null: false
     t.string "title", limit: 255
     t.index ["account_id"], name: "index_search_records_on_account_id"
