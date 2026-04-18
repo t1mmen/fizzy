@@ -1,6 +1,6 @@
 # S2 — Board/Column/Access Projection Spec (Beads-backed Cards)
 
-**Status**: v1 ready for peer review
+**Status**: v2 ready (pinned/custom status coverage + dep wiring)
 **Bead**: `fizzy-eq4` (epic)
 **Drafter**: `fizzy-codex`
 **Reviewers**: `fizzy-claude` (peer), `fizzy-gemini` (third-lens)
@@ -93,13 +93,17 @@ Canonical default columns:
 
 | Column (UI label) | `columns.beads_status` | Cards included |
 |---|---|---|
-| Todo | `open` | `cards.beads_status='open'` |
+| Todo | `open` | `cards.beads_status='open'` + any custom status categorized as `unspecified` |
 | Doing | `in_progress` | `cards.beads_status='in_progress'` |
 | Blocked | `blocked` | `cards.beads_status='blocked'` |
 | Not now | `deferred` | `cards.beads_status='deferred'` |
-| Done | `closed` | `cards.beads_status='closed'` |
+| Done | `closed` | `cards.beads_status='closed'` + any custom status categorized as `done` or `frozen` |
 
-Pinned is explicitly *not* a column (P4 §C.3); it is a board overlay section (see §E/§F).
+Pinned is explicitly *not* a column (P4 §C.3). If Beads uses `status='pinned'`, V1 must surface those issues in a board overlay (see §E/§F) and ensure they are not rendered “invisible” due to no matching column.
+
+**Fallback rule (non-negotiable)**: if a card has an unknown `beads_status` and no custom-status categorization is available yet, treat it as `open` (Todo) so it is always visible.
+
+**Custom status categorization source**: Beads defines `custom_statuses(name, category)` (seen in Beads schema; referenced by Beads views like `blocked_issues`). The fork cannot join across DBs at query time, so the Beads→Fizzy projection layer (S9) must mirror `custom_statuses` into MySQL (shape TBD) so the board projector can correctly route `done`/`frozen` custom statuses into Done.
 
 ### B.3 Label-driven custom columns (optional in V1, but specified)
 
@@ -155,7 +159,9 @@ board_cards = Card
 Given `board_cards` and a default column:
 
 ```ruby
-board_cards.where(beads_status: column.beads_status)
+board_cards
+  .where(beads_status: column.beads_status)
+  .where.not(beads_status: "pinned") # pinned is overlay, not column
 ```
 
 ### C.3 Inbox (boardless) relation
@@ -244,10 +250,15 @@ Pins stay a Fizzy-side overlay (P4 §C.3: pinned is overlay, not column).
 
 Query posture:
 - Pins are `pins(card_id, user_id)` with `card_id` widened in S1 (`fizzy-4wm`).
-- For a board, pinned cards are:
+- Beads may also encode “pinned” as a status value (`cards.beads_status='pinned'`). Those cards must appear in the overlay even if the user did not explicitly pin them.
+- For a board, the pinned overlay is the union of:
+  - user pins (`pins` join), and
+  - Beads-pinned status cards.
 
 ```ruby
-board_cards.joins(:pins).where(pins: { user_id: Current.user.id })
+user_pinned = board_cards.joins(:pins).where(pins: { user_id: Current.user.id })
+status_pinned = board_cards.where(beads_status: "pinned")
+pinned_overlay = Card.where(id: user_pinned.select(:id)).or(Card.where(id: status_pinned.select(:id)))
 ```
 
 Pin create/destroy endpoints are out of scope for this spec doc to enumerate exhaustively, but S2 child beads must cover pin overlay rendering + correctness after board membership is label-based.
@@ -261,6 +272,7 @@ V1 ships Kanban + List view (P4 §B.4). Both views must be sourced from the same
 
 Kanban:
 - Group cards by Column (default: beads_status) and render in `columns.position` order.
+- Exclude `beads_status='pinned'` cards from the main kanban columns by default (they live in the pinned overlay).
 - Drag-drop between columns triggers Beads status update (S4 defines mapping + argv).
 
 List:
@@ -334,7 +346,7 @@ All beads below are created and wired as:
 | `fizzy-eq4.6` | Board show projector/query object (Kanban+List substrate) | §C, §E, §F | `fizzy-eq4.4`, `fizzy-eq4.5`, `fizzy-05q`, `fizzy-k48`, `fizzy-m6r` |
 | `fizzy-eq4.7` | Rewrite `BoardsController#show` to use projector | §D.1 | `fizzy-eq4.6` |
 | `fizzy-eq4.8` | Rewrite `Cards::BoardsController` to move boards via bd label writes | §D.4, §G.1 | `fizzy-eq4.3` |
-| `fizzy-eq4.9` | Rewrite `Cards::TaggingsController` to mutate Beads labels | §D.4 | (blocked on S5 label projection; TODO wire once S5 exists) |
+| `fizzy-eq4.9` | Rewrite `Cards::TaggingsController` to mutate Beads labels | §D.4 | `fizzy-6iv` (S5 lock placeholder) |
 | `fizzy-eq4.10` | Rewrite board access cleanup queries (`Board::Accessible`) | §G.3 | `fizzy-eq4.3`, `fizzy-eq4.4` |
 | `fizzy-eq4.11` | Pins overlay remains functional after label membership | §E | `fizzy-eq4.6`, `fizzy-05q`, `fizzy-4wm` |
 | `fizzy-eq4.12` | Specify + implement drift correction for single-board invariant | §G.2 | `fizzy-eq4.3` (implementation blocked on S9 poller) |
