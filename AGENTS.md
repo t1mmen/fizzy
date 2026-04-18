@@ -165,6 +165,43 @@ Use Chrome MCP tools to interact with the running dev app for UI testing and deb
 
 @STYLE.md
 
+## Multi-Agent File Ownership
+
+This repository is operated by three coordinating agents: `fizzy-claude`, `fizzy-codex`, and `fizzy-gemini`. To prevent accidental data loss when working trees show unexpected diffs, the following rules are non-negotiable.
+
+### Owned files (do NOT touch unless you are the owner)
+
+| File | Owner |
+|---|---|
+| `llm/claude-state.md` | `fizzy-claude` only |
+| `llm/codex-state.md` | `fizzy-codex` only |
+| `llm/gemini-state.md` | `fizzy-gemini` only |
+
+If a peer's state file has uncommitted modifications in your working tree:
+1. **Do not revert.** That destroys peer work-in-progress.
+2. **Commit it on their behalf** with a message like `<round>: persist <peer>-state.md (peer's progress tracking)` and push.
+3. Ping the owner via tmux so they pull and continue from a clean tree.
+
+### Unknown files (do NOT touch)
+
+If you encounter a file in your tree that you do not recognize and cannot trace to your current round's writable scope:
+- Leave it alone.
+- Do not delete, revert, edit, or "clean up" it.
+- Ping the responsible agent or the CEO and ask before any destructive action.
+
+This rule applies even when the file looks like junk. "Looks like junk" has historically been peer in-progress work or CEO-staged context. Verify before destroying.
+
+### Shared files (open to all agents, but follow protocol)
+
+- `llm/LOG.md` — append-only by all agents per `llm/README.md`
+- `.beads/issues.jsonl` — produced by `bd` commands; commit but do not hand-edit
+- `llm/notes/<round>-*.md` — round artifacts; only the drafter edits during draft phase, peers only when reviewing per `skills/round-protocol.md`
+- Code files — owned by the implementation round currently consuming them (per round writable-scope declaration)
+
+### Failure mode log
+
+- **2026-04-18**: Codex investigated uncommitted `llm/gemini-state.md` and almost reverted it as "stray junk". CEO intervened. Recovery: Claude committed gemini-state on Gemini's behalf and pushed; Codex pulled. Lesson encoded above.
+
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker
 

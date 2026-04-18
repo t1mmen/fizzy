@@ -130,6 +130,50 @@ Feedback must be **concrete**:
 - ambiguous AC
 - contradictions with RoE / hierarchy
 
+#### 3.3.1 Explicit return-message policy (mandatory in every dispatch)
+
+Every tmux dispatch from one agent to another MUST carry an explicit return-message contract. Implicit "you know the protocol from the skills file" is not enough — agents drift, lose state, or interpret loosely. Spell it out per dispatch.
+
+Required ending in every outbound message body:
+
+```
+Reply: <envelope> via tmux + LOG when <trigger>.
+```
+
+Or, if no reply is wanted:
+
+```
+Reply: none needed.
+```
+
+Canonical envelopes (use exactly):
+
+- `[FROM→TO <round-id>: agreed]` — convergence signal (ratifies the artifact from sender's view)
+- `[FROM→TO <round-id>: feedback]` — concrete change requests, structured as numbered items
+- `[FROM→TO <round-id>: ack]` — acknowledgment of receipt, no decision yet
+- `[FROM→TO <round-id> v<N> ready]` — drafter signaling a new revision is ready for review
+- `[FROM→TO <round-id>: blocked]` — drafter cannot proceed; explain why + what unblocks
+
+Worked examples:
+
+```
+[CLAUDE→CODEX S2 dispatch] <body>
+Reply: [CODEX→CLAUDE S2 v1 ready] via tmux + LOG when v1 draft + child beads complete.
+```
+
+```
+[CLAUDE→CODEX corrective] <body>
+Reply: none needed. (Just adjust your tree and continue.)
+```
+
+```
+[CLAUDE→GEMINI S2 dispatch] <body>
+Reply: [GEMINI→CLAUDE S2: ack] via tmux + LOG once you have read the brief and understand the role.
+       Then [GEMINI→CLAUDE S2: agreed] or [GEMINI→CLAUDE S2: feedback] after Codex S2 v1 lands.
+```
+
+Why this rule exists: implicit-protocol dispatches have caused silent stalls and missed handoffs. Explicit per-dispatch return policy removes the guesswork. See `feedback_dispatch_return_policy.md` in Claude's project memory for the full rationale.
+
 ### 3.4 Iterate (<= 8 back-and-forths)
 
 We iterate within the budget:
