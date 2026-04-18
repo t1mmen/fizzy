@@ -59,12 +59,16 @@ P7 §B.2 originally proposed dropping the `taggings` join. P9 + S1 + S2 reversed
 
 The S9 poller (placeholder beads `fizzy-1iz` lifecycle + `fizzy-6iv` labels) MUST:
 
-1. For each Beads issue change event mentioning labels:
-   - Compute the diff between Beads `labels(issue_id, label)` and current Fizzy `taggings.where(card_id: issue_id)` joined to `tags.title`.
-   - For added labels: `Tag.find_or_create_by!(account_id:, title: normalized_label)` then `Tagging.upsert(card_id:, tag_id:, ...)`.
-   - For removed labels: delete the matching `Tagging` row; do NOT delete the Tag (Tags are account-wide and may be reused).
-2. Bypass AR callbacks per P9 §A.2 (use `Tagging.upsert_all` / `Tagging.delete` direct SQL); explicit `Search::Record.upsert_for_card(card)` after.
-3. Respect tag dedup by normalized title — `Tag.find_or_create_by!(title: ...)` is the only path that creates Tags during mirroring.
+1. For each Beads issue change event mentioning labels, compute the diff between Beads `labels(issue_id, label)` and current Fizzy `taggings.where(card_id: issue_id)` joined to `tags.title`.
+
+2. **All writes are SQL-level (callback-bypass per P9 §A.2)**:
+   - For added labels: `Tag.upsert_all([{account_id:, title: normalized_label, ...}], unique_by: [:account_id, :title])` (idempotent), then `Tagging.upsert_all([{card_id:, tag_id:, ...}], unique_by: [:card_id, :tag_id])`.
+   - For removed labels: `Tagging.where(card_id:, tag_id:).delete_all` (raw SQL); do NOT delete the Tag (Tags are account-wide and may be reused).
+   - Tag dedup: the unique index on `(account_id, title)` enforces normalized-title uniqueness; `upsert_all` is the SoT mechanism.
+
+3. **Explicit search sync after mirror writes**: `Search::Record.upsert_for_card(card)` per shard-key rules (P9). Bypassed AR callbacks would normally trigger this; the poller must do it explicitly.
+
+No `Tag.find_or_create_by!` (AR path with callbacks/validations) anywhere in the poller. The poller is callback-bypass end-to-end.
 
 ### B.4 Eventually consistent
 
@@ -153,22 +157,34 @@ These call sites construct CommandClient with the system actor: `CommandClient.f
 
 Future S- or P-rounds may add prefixes; ALL system labels MUST use `fizzy/`.
 
-### D.2 Controller-side validation
+### D.2 Controller-side rejection (NOT model validation)
 
-`Tag` model already validates: `validates :title, format: { without: /\A#/ }` + `normalizes :title, with: ->(s) { s.downcase }`.
+The Tag model does NOT gain a `RESERVED_NAMESPACE` validation. Reason: the S9 poller MUST be able to mirror `fizzy/board/<uuid>` labels into `tags` rows (so S2 board projection queries work). A model-level validation would block the poller's writes and force fragile bypass logic.
 
-S5 adds:
+Defense-in-depth is enforced at TWO layers (neither at the AR model layer):
+
+1. **Controller layer**: every label-input surface (e.g. `Cards::TaggingsController#create`) calls a shared reserved-namespace helper before invoking CommandClient. User-typed `fizzy/...` returns 422 with a clear error; never reaches CommandClient.
+
+2. **CommandClient layer**: `add_label`/`set_labels` raise `ArgumentError` if a label starts with `fizzy/` (per §C.1). System-code paths use `_add_system_label` (private) to write `fizzy/...` legitimately.
+
+Shared helper module:
 ```ruby
-class Tag < ApplicationRecord
-  RESERVED_NAMESPACE = %r{\Afizzy/}i
-  validates :title, format: { without: /\A#/ }
-  validates :title, format: { without: RESERVED_NAMESPACE, message: "cannot use reserved fizzy/ namespace" }
-  normalizes :title, with: ->(s) { s.downcase }
-  # ...
+module Fizzy
+  module Beads
+    module ReservedNamespace
+      RESERVED_PREFIX_RE = %r{\Afizzy/}i
+
+      def self.violates?(label)
+        Fizzy::Beads::LabelNormalizer.call(label).match?(RESERVED_PREFIX_RE)
+      end
+    end
+  end
 end
 ```
 
-This validation fires on `Tag.find_or_create_by!(title: ...)` in `Cards::TaggingsController#create`. The user gets a 422 before any Beads write happens.
+`Tag` model retains its existing upstream validation: `validates :title, format: { without: /\A#/ }` + `normalizes :title, with: ->(s) { s.downcase }`. NO additions. This keeps the AR layer agnostic about namespace policy — that's a write-path concern, not a storage concern.
+
+The Tag model accepts ANY non-`#`-prefixed string as a title, including `fizzy/board/<uuid>`. The poller writes those rows freely.
 
 ### D.3 Server-side (poller) honoring
 
@@ -207,13 +223,23 @@ Every `add_label`/`remove_label`/`set_labels` call in CommandClient runs through
 
 Per P7 §D.2: matches existing upstream `Tag.title` validation (which rejects via `format: { without: /\A#/ }`, doesn't strip). User gets a clear error rather than seeing their input silently mutated. Easier to relax later than tighten.
 
-### E.4 What about labels added via `bd` CLI directly?
+### E.4 Beads-only labels (those failing Fizzy normalization) are CLI-only
 
-If a user runs `bd update <id> --add-label "#Backend"` from the command line, that label lands in Beads as-is (no normalization on Beads side). Fizzy displays it as-is on read; the S9 poller mirrors it as-is into a `Tag` row with `title="#Backend"` — but wait, that violates the Tag validation `format: { without: /\A#/ }`!
+If a user runs `bd update <id> --add-label "#Backend"` directly, that label lands in Beads as-is. The Fizzy `Tag` model rejects titles starting with `#` (existing upstream `format: { without: /\A#/ }` validation), so the poller cannot create a `Tag` row for it.
 
-**Mitigation in S5**: the S9 poller MUST `find_or_create_by!` with the normalized form, not the raw form. So a Beads label `#Backend` would be normalized to `backend` on the mirror side, and the Tag row would be `backend`. The user's `#` and `B` are lost in the mirror but Beads still has the original. This is acceptable — the canonical user-facing form is the normalized form.
+**S5 stance — explicit and intentional**: such labels are **not mirrored**. They exist in Beads (visible to `bd query`, `bd show`, etc.) but are invisible to Fizzy UI:
 
-S9 owns the exact poller behavior; S5 just specifies that normalization MUST run on the poller side too. (Captured in `fizzy-6iv` placeholder description / will be reaffirmed when S9 spec drafts.)
+- Poller path: when consuming a Beads label, the poller calls `LabelNormalizer.call(label)` first. If the call raises `InvalidLabelError` (leading `#`, empty), the poller **silently skips** that label — no Tag/Tagging row is created.
+- Fizzy UI shows nothing for that label. The user cannot remove it from the UI either (since it doesn't exist in `tags`/`taggings`).
+- Removal requires direct CLI: `bd update <id> --remove-label "#Backend"`.
+
+**Consequence (non-round-trippable)**: a user who adds a non-canonical label via CLI cannot remove it via UI. They must use CLI to clean up. This is a known asymmetry, intentional in V1.
+
+Why we don't mirror with normalization (the rejected approach): would create round-trip gap — UI tries to remove `backend` (normalized form), CommandClient sends `bd update --remove-label backend`, but Beads still has `#Backend` (the literal stored form), so removal silently fails. Worse than not mirroring at all.
+
+Why we don't add a separate `raw_title` column (deferred): adds storage + complexity for an edge case (users typically don't write labels via CLI directly). Revisit in V2 if usage warrants.
+
+This is captured as deferred Q-S-S5-001 in §J.
 
 ## §F — Assignment sidecar (multi-assignee preserved)
 
@@ -387,6 +413,7 @@ The poller's tag/tagging mirror behavior is tested under S9. S5 specifies the co
 3) **`fizzy/` divergence cleanup**: Beads-side direct writes that introduce non-canonical or reserved-namespace labels — V2 linter or auto-rewrite. (P7 §D.4.)
 4) **Optimistic UI for tagging**: §G.2 mentions optimistic render; exact JS / Hotwire pattern is implementation detail for I-S5.
 5) **Tag deletion UX**: deleting a Fizzy `Tag` (admin operation) requires removing the label from EVERY Beads issue that has it (P7 §B.4 admin-delete-tag flow). S5 specifies this happens via a job that iterates issues and calls `remove_label` for each; exact job design is I-S5.
+6) **Q-S-S5-001 — Admin removal UX for CLI-only (non-canonical) labels**: §E.4 makes labels failing Fizzy normalization (e.g. `#Backend`) invisible to the UI. To remove them, an admin currently must use `bd` CLI directly. V2 may add a "raw labels viewer" admin page that lists Beads labels not present in Fizzy `tags`, with a remove button that invokes `CommandClient.remove_label` with the literal Beads value. Out of V1 scope.
 
 ## §K — Child bead inventory
 
@@ -398,7 +425,7 @@ Cross-spec placeholder closed on S5 lock:
 | F.N | Bead | Title | Satisfies | Key dependencies |
 |---|---|---|---|---|
 | F.1 | `fizzy-5yn` | Implement `LabelNormalizer` + unit tests | §E | none |
-| F.2 | `fizzy-13b` | Add `RESERVED_NAMESPACE` validation to `Tag` model | §D.2 | none |
+| F.2 | `fizzy-13b` | Implement `Fizzy::Beads::ReservedNamespace.violates?(label)` shared helper for controllers (no AR model change) | §D.2 | `fizzy-5yn` |
 | F.3 | `fizzy-j1t` | Add label methods to CommandClient (`add_label`, `remove_label`, `set_labels`) | §A.2, §C.1 | `fizzy-5jt`, `fizzy-r4v`, `fizzy-5yn` |
 | F.4 | `fizzy-woh` | Add `set_assignee` method to CommandClient | §C.1, §F.3 | `fizzy-5jt`, `fizzy-r4v` |
 | F.5 | `fizzy-75i` | Add `_add_system_label` / `_remove_system_label` private methods | §C.4 | `fizzy-j1t` |
@@ -417,8 +444,10 @@ Pre-lock checklist for S5:
 - [x] §B explicitly supersedes P7 §B.2 with mirror posture (taggings stays)
 - [x] §B.3 poller contract for label mirror specified (S9-owned mechanism)
 - [x] §C CommandClient method signatures + actor enforcement + system-label private split
-- [x] §D namespace registry + Tag validation (defense-in-depth)
+- [x] §D namespace registry + controller-side reject + CommandClient defense-in-depth (NO AR model validation per Codex v1 feedback — would block poller)
+- [x] §B.3 poller path is callback-bypass end-to-end (upsert_all only; no AR find_or_create_by!) per Codex v1 feedback
 - [x] §E LabelNormalizer rules + applied at every CommandClient call
+- [x] §E.4 explicit stance: invalid labels are CLI-only (not mirrored); tracked as Q-S-S5-001 in §J
 - [x] §F assignment sidecar canonical for multi-assignee + primary mirrors to Beads
 - [x] §G TaggingsController rewire closes S2 fizzy-eq4.9 cross-spec dep
 - [x] §H AssignmentsController stays AR-shaped; sync via model callback
