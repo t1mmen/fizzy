@@ -13,8 +13,7 @@ class Assignment < ApplicationRecord
   # assignee. Beads issues.assignee is single-value, so we mirror the
   # PRIMARY assignee (chronologically first by created_at) to Beads via
   # CommandClient on every sidecar mutation.
-  after_create_commit :sync_primary_assignee_to_beads
-  after_destroy_commit :sync_primary_assignee_to_beads
+  after_commit :sync_primary_assignee_to_beads, on: [ :create, :destroy ]
 
   private
     def within_limit
