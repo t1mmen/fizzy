@@ -153,6 +153,29 @@ module Fizzy
       end
 
       # ------------------------------------------------------------------
+      # S2 F.8 — move_to_board (per S2 §D.5 + P4 §A.4 single-board invariant)
+      # Internal-only: used by Cards::BoardsController (S2) to enforce the
+      # single-board membership label invariant by removing all existing
+      # `fizzy/board/*` labels and adding the target membership label.
+      # ------------------------------------------------------------------
+
+      def move_to_board(issue_id, membership_label)
+        normalized = LabelNormalizer.call(membership_label)
+        raise ArgumentError, "membership_label must start with fizzy/board/" unless normalized.start_with?("fizzy/board/")
+
+        issue_json = read_issue(issue_id)
+        issue = issue_json.is_a?(Array) ? issue_json.first : issue_json
+        existing_labels = Array(issue&.fetch("labels", nil))
+
+        existing_labels.grep(/\Afizzy\/board\//).each do |label|
+          next if label == normalized
+          _remove_system_label(issue_id, label)
+        end
+
+        _add_system_label(issue_id, normalized) unless existing_labels.include?(normalized)
+      end
+
+      # ------------------------------------------------------------------
       # S6 F.2 — add_comment (per S6 §C.1 + §C.2)
       # Uses --file to avoid quoting/escaping pitfalls; --author = @actor
       # so poller deterministic mapping works (S6 §C.3); --json so we get

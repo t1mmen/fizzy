@@ -10,6 +10,10 @@ class Cards::BoardsController < ApplicationController
   end
 
   def update
+    if @card.id.to_s.start_with?("fizzy-")
+      Fizzy::Beads::CommandClient.current.move_to_board(@card.id, @board.membership_label)
+    end
+
     @card.move_to(@board)
 
     respond_to do |format|
