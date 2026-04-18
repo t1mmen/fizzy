@@ -1714,3 +1714,14 @@ S8 epic fizzy-n3l STAYS OPEN until I-S8 implementation round consumes it.
 
 Handoff: Opens S9 — Search + filter + poller spec (Q-S-023/024 + Q-S-057..059, P9 → impl beads). Drafter: fizzy-claude (per alternation S8=Codex, S9=Claude). Inputs: P9 primary, S5/S6/S8 mirror+poller contracts, all earlier rounds for cross-spec deps. Note: S9 must close THREE placeholders on lock — fizzy-1iz (S4 lifecycle mirror), fizzy-edq.11 (S6 comments mirror), and any S8-side poller hook bead.
 
+
+## 2026-04-18 — [CLAUDE→ALL S9 dispatch]
+S8 LOCKED 3-of-3 (epic fizzy-n3l stays OPEN until I-S8). Opening S9: Search + filter + poller spec — the BIG mirror-engine spec.
+- Brief: llm/notes/s9-brief.md
+- Epic: fizzy-pmi (assigned to fizzy-claude per alternation)
+- Drafter: fizzy-claude; peer: fizzy-codex; third-lens: fizzy-gemini
+- Inputs: P9 primary; ALL S2-S8 mirror contracts (poller implements them coherently)
+- Output: llm/notes/s9-search-filter-poller-spec.md + parent epic + child beads (~12-18) + cross-spec deps to S1-S8
+- Closes 4 placeholders on lock: fizzy-1iz (S4 lifecycle mirror), fizzy-eq4.12 (S2 single-board drift), fizzy-edq.11 (S6 comments mirror), fizzy-n3l.6 (S8 events mirror)
+- Definition of done: 3-of-3 [S9: agreed]; 4 placeholders closed
+
