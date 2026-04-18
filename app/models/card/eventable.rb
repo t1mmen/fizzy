@@ -17,8 +17,17 @@ module Card::Eventable
   end
 
   def touch_last_active_at
-    # Not using touch so that we can detect attribute change on callbacks
-    update!(last_active_at: Time.current)
+    if Current.beads_mirror?
+      # S8 §B.4: poller-originated Event creation must NOT cascade Card-side
+      # callbacks (Searchable, Notifiable on Card, etc.) — those re-emissions
+      # double the events the poller is mirroring. update_columns bypasses
+      # AR callbacks + validations + dirty tracking entirely.
+      update_columns(last_active_at: Time.current)
+    else
+      # Non-mirror path (UI/job/test): preserve existing semantics so callers
+      # that rely on Card callbacks (Searchable update, etc.) still fire.
+      update!(last_active_at: Time.current)
+    end
   end
 
   private

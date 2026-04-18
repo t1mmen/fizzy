@@ -1,6 +1,14 @@
 class Current < ActiveSupport::CurrentAttributes
   attribute :session, :user, :identity, :account, :actor
   attribute :http_method, :request_id, :user_agent, :ip_address, :referrer
+  # S8 §B.4 + S9 §A.1: mirror-mode guard — set true by BeadsPoller#perform so
+  # poller-originated writes (Card#touch_last_active_at, etc.) bypass callbacks
+  # that would otherwise emit Beads-events-twice. Falsy in all other contexts.
+  attribute :beads_mirror
+
+  def beads_mirror?
+    beads_mirror.present?
+  end
 
   def session=(value)
     super(value)
