@@ -132,7 +132,7 @@ Each migration file has a paired `down` method that reverses the column type cha
 4. Re-add FK constraints
 5. Drop `cards.beads_status`
 
-For dropped tables (`closures`, `card_not_nows`, `card_goldnesses`, `card_activity_spikes`, `taggings`): the `down` recreates them (with original schema) but data is lost on rollback; document.
+For dropped tables (v2 corrected — only 3 are dropped: `card_not_nows`, `card_goldnesses`, `card_activity_spikes`): the `down` recreates them (with original schema) but data is lost on rollback; document. (`closures` and `taggings` are NOT dropped per P9 mirror doctrine — they remain as Fizzy-side mirror tables, FK widened.)
 
 The rollback script is part of the spec; the implementation round produces the actual `db/migrate/...rb` files.
 
