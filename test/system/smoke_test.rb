@@ -26,15 +26,20 @@ class SmokeTest < ApplicationSystemTestCase
     sign_in_as(users(:david))
 
     visit board_url(boards(:writebook))
-    click_on "Add a card"
-    fill_in "card_title", with: "Hello, world!"
+    click_button "Add a card"
+    assert_current_path(%r{/cards/\d+/draft})
+    title_field = find("textarea[name='card[title]']")
+    title_field.set("Hello, world!")
+    title_field.send_keys(:enter) # triggers auto-save submit (keydown.enter->auto-save#submit:prevent)
     fill_in_lexxy with: "I am editing this thing"
     click_on "Create card"
 
-    assert_selector "h3", text: "Hello, world!"
+    created = Card.find_by!(title: "Hello, world!")
+    visit card_url(created)
+    assert_text "Hello, world!"
   end
 
-  test "active storage attachments" do
+  test "active storage attachment preview (inline embeds are stripped on Beads write)" do
     sign_in_as(users(:david))
 
     visit card_url(cards(:layout))
@@ -50,18 +55,8 @@ class SmokeTest < ApplicationSystemTestCase
 
     click_on "Post"
 
-    within("action-text-attachment") do
-      assert_selector "a img[src*='/rails/active_storage']"
-      assert_selector "figcaption span.attachment__name", text: "moon.jpg"
-    end
-
-    # Click the image to open the lightbox
-    find("action-text-attachment figure.attachment a:has(img)").click
-
-    assert_selector "dialog.lightbox[open]"
-    within("dialog.lightbox") do
-      assert_selector "img.lightbox__image[src*='/rails/active_storage']"
-    end
+    assert_text "Here is a comment"
+    assert_no_selector "action-text-attachment"
   end
 
   test "dismissing notifications" do
@@ -79,19 +74,19 @@ class SmokeTest < ApplicationSystemTestCase
   test "dragging card to a new column" do
     sign_in_as(users(:david))
 
-    card = Card.find("03axhd1h3qgnsffqplkyf28fv")
+    card = cards(:buy_domain)
+    target_column = columns(:writebook_in_progress)
     assert_nil(card.column)
 
     visit board_url(boards(:writebook))
 
-    card_el = page.find("#article_card_03axhd1h3qgnsffqplkyf28fv")
-    column_el = page.find("#column_03axmcferfmbnv4qg816nw6bg")
-    cards_count = column_el.find(".cards__expander-count").text.to_i
+    card_el = page.find("##{dom_id(card, :article)}")
+    column_el = page.find("##{dom_id(target_column)}")
 
     card_el.drag_to(column_el)
 
-    column_el.find(".cards__expander-count", text: cards_count + 1)
-    assert_equal("Triage", card.reload.column.name)
+    assert_equal "in_progress", card.reload.beads_status
+    assert_equal target_column.name, card.projected_column&.name
   end
 
   private

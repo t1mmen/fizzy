@@ -31,8 +31,15 @@ module User::Accessor
   end
 
   def draft_new_card_in(board)
-    board.cards.find_or_initialize_by(creator: self, status: "drafted").tap do |card|
+    Card.find_or_initialize_by(board: board, creator: self, status: "drafted").tap do |card|
+      card.account_id ||= board.account_id
       card.update!(created_at: Time.current, updated_at: Time.current, last_active_at: Time.current)
+
+      # Post-S2: board membership is label-based (`fizzy/board/<uuid>`). Draft
+      # cards created via UI must carry the board membership tagging so
+      # accessible_cards / board.cards scopes can see them.
+      tag = Tag.find_or_create_by!(account_id: board.account_id, title: board.membership_label)
+      Tagging.find_or_create_by!(account_id: board.account_id, card_id: card.id, tag_id: tag.id)
     end
   end
 
