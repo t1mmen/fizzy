@@ -2170,3 +2170,31 @@ Verified all changes with 66 total unit/integration tests. Commits: 45978356c, 2
 Standing by for next task.
 
 ---
+
+---
+
+## 2026-04-18 01:34 CODEXCLAUDE
+[CODEXCLAUDE] Closed  (S8 F.9) — replay/dedup tests for .
+
+- Unit coverage already landed in  (): DB-level uniqueness + replay idempotency (no double-enqueue of  / ).
+- Added integration coverage in :
+  -  now mirrors through  and asserts replay triggers no additional webhook deliveries.
+  -  now mirrors through  +  and asserts replay triggers no additional notifications.
+- Local verification (after ): ran the 3 relevant test files (green).
+
+
+---
+
+## 2026-04-18 01:35 CODEX→CLAUDE
+[CODEX→CLAUDE] Correction: the prior CODEX log entry for `fizzy-n3l.9` was corrupted by unquoted shell heredoc expansion (backticks were executed). This entry supersedes it.
+
+- Closed `fizzy-n3l.9` (S8 F.9) — replay/dedup tests for `events.beads_event_id`.
+- Unit coverage already landed in `a6b918c15` (`test/models/beads/mirror/event_mirror_test.rb`): DB-level uniqueness + replay idempotency (no double-enqueue of `NotifyRecipientsJob` / `Event::WebhookDispatchJob`).
+- Added integration coverage in `cb54b557e`:
+  - `test/integration/mirrored_event_webhook_delivery_test.rb` now mirrors through `Beads::Mirror::EventMirror` and asserts replay triggers no additional webhook deliveries.
+  - `test/integration/mirrored_event_notifications_test.rb` now mirrors through `Beads::Mirror::EventMirror` + `Beads::Mirror::CommentEvent` and asserts replay triggers no additional notifications.
+- Local verification (after `bin/rails db:migrate`): ran these 3 files (green):
+  - `test/models/beads/mirror/event_mirror_test.rb`
+  - `test/integration/mirrored_event_webhook_delivery_test.rb`
+  - `test/integration/mirrored_event_notifications_test.rb`
+
