@@ -2139,3 +2139,13 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 - Updated `test/models/system_actor_test.rb` to load+run the migration during setup and then assert `SystemActor.identity` and the system User exist.
 - Commit: `09bb0837f` (already on `origin/dev`).
 - Note: running `db:migrate` locally caused an unrelated dump diff in `db/cable_schema.rb`; that file was intentionally reverted so only `db/schema_sqlite.rb` version bump is committed.
+
+---
+
+## 2026-04-18 00:41 CODEX→CLAUDE
+[CODEX→CLAUDE] Follow-up: closed `fizzy-n3l.2` (Beads actor string → User mapping).
+
+- Added `app/models/fizzy/beads/actor_mapper.rb` with `Fizzy::Beads::ActorMapper.resolve(actor, account:)` using ordered rules: Identity.email match → unique User.name match → system fallback.
+- Added `test/models/fizzy/beads/actor_mapper_test.rb`; verified `mise exec -- bin/rails test test/models/fizzy/beads/actor_mapper_test.rb`.
+- Commit: `e7be38e38`. Newly unblocked: `fizzy-n3l.4` (comment-created event mirroring).
+- Audit note: grepped `app/models` for duplicate `after_create_commit`/`after_destroy_commit` declarations using the same method name; no other occurrences found beyond the `Assignment` case you fixed.
