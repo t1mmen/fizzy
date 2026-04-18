@@ -215,14 +215,14 @@ Child beads (I-S7 implementation tasks) minted under epic `fizzy-yeu`. Smaller s
 
 | F.N | Bead | Title | Satisfies | Key dependencies |
 |---|---|---|---|---|
-| F.1 | `fizzy-yeu.1` | Verify post-S1 ActiveStorage attachment + AT + Storage::Entry round-trips with varchar record_id | §A.2 | `fizzy-cjs`, `fizzy-0ic`, `fizzy-jzw` |
-| F.2 | `fizzy-yeu.2` | Add `account.storage_quota_bytes` + warn/reject threshold config | §E.2 | none |
-| F.3 | `fizzy-yeu.3` | Implement Storage::Tracked#storage_quota_check enforcement (422 on hard-reject) | §E.3 | `fizzy-yeu.2` |
-| F.4 | `fizzy-yeu.4` | Inline-attachment strip in `ActionTextToPlaintext` serializer + render-side does NOT rebuild inline (per §C.2) | §C, §D | `fizzy-edq.4` (S6 plaintext serializer) |
-| F.5 | `fizzy-yeu.5` | Update Account::DataTransfer export/import to handle varchar record_ids | §G.2 | `fizzy-cjs` |
-| F.6 | `fizzy-yeu.6` | OrphanCleanupJob + poller hook on Beads-issue hard-delete | §F.1 | `fizzy-edq.11` (S6 poller) |
-| F.7 | `fizzy-yeu.7` | Account::Settings UI shows storage usage + quota progress bar (read-only data path) | §E.4 | `fizzy-yeu.2` |
-| F.8 | `fizzy-yeu.8` | Integration tests: upload over quota → 422; under quota → success; inline attachment behavior | §H.2 | `fizzy-yeu.3`, `fizzy-yeu.4` |
+| F.1 | `fizzy-a27` | Verify post-S1 ActiveStorage attachment + AT + Storage::Entry round-trips with varchar record_id | §A.2 | `fizzy-cjs`, `fizzy-0ic`, `fizzy-jzw` |
+| F.2 | `fizzy-sgp` | Add `account.storage_quota_bytes` + warn/reject threshold config | §E.2 | none |
+| F.3 | `fizzy-c3z` | Implement Storage::Tracked#storage_quota_check enforcement (422 on hard-reject) | §E.3 | `fizzy-sgp` |
+| F.4 | `fizzy-dyw` | Inline-attachment strip in `ActionTextToPlaintext` serializer + render-side does NOT rebuild inline (per §C.2) | §C, §D | `fizzy-edq.4` (S6 plaintext serializer) |
+| F.5 | `fizzy-9cx` | Update Account::DataTransfer export/import to handle varchar record_ids | §G.2 | `fizzy-cjs` |
+| F.6 | `fizzy-nid` | OrphanCleanupJob + poller hook on Beads-issue hard-delete | §F.1 | `fizzy-edq.11` (S6 poller) |
+| F.7 | `fizzy-8jc` | Account::Settings UI shows storage usage + quota progress bar (read-only data path) | §E.4 | `fizzy-sgp` |
+| F.8 | `fizzy-60v` | Integration tests: upload over quota → 422; under quota → success; inline attachment behavior | §H.2 | `fizzy-c3z`, `fizzy-dyw` |
 
 ## §K — Validation checklist
 
