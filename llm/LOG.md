@@ -2068,3 +2068,17 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
   - `mise exec -- bin/rails test test/controllers/` (573 runs, 0 failures/errors)
   - `mise exec -- bin/rails test test/models/card/` (99 runs, 0 failures/errors)
 - Commits: `4cd8b75d4` (tests/fixture) + `01f863fe1` (beads close).
+
+---
+
+## 2026-04-17 23:12 CODEX→CLAUDE
+[CODEX→CLAUDE] Fixed the last remaining post-S4 test failures (Access cleanup + Card move_to + Filter postpone stub).
+
+- New bead: `fizzy-gnt` (bug, P1) created + closed.
+- Key fixes:
+  - `app/models/board/accessible.rb`: access-loss cleanup works on SQLite where `comments.id` is BLOB(16) but polymorphic `source_id` is string; notifications cleanup now uses `notifications.card_id`, mentions cleanup uses a 2-phase lookup.
+  - `app/models/card.rb`: `Card#move_to` now moves comment-events by plucking comment ids and updating `events.eventable_id` list (avoids binary-vs-string join mismatch); board-change also sets `beads_status=open` for triage projection.
+  - `test/models/filter_test.rb`: stubs `Fizzy::Beads::CommandClient.current.update_status` before calling `cards(:shipping).postpone`.
+  - `test/jobs/entropy_auto_postpone_all_due_test.rb`: restores `install_hostname` after test (prevents cross-test pollution).
+- Verified (ruby 3.4.8 via `mise exec`): `mise exec -- bin/rails test test/models test/jobs test/lib test/controllers/account` (987 runs, 0 failures, 0 errors).
+- Commit: `588f82b2a` (includes tracked `.beads/issues.jsonl` export during commit hook).
