@@ -4,7 +4,7 @@ class Board < ApplicationRecord
   # create/move flows and projected into Card mirror via the S9 poller.
   BOARD_LABEL_PREFIX = "fizzy/board/".freeze
 
-  include Accessible, AutoPostponing, Board::Storage, Broadcastable, Cards, Entropic, Filterable, Publishable, ::Storage::Tracked, Triageable
+  include Accessible, AutoPostponing, Board::DefaultColumns, Board::Storage, Broadcastable, Cards, Entropic, Filterable, Publishable, ::Storage::Tracked, Triageable
 
   belongs_to :creator, class_name: "User", default: -> { Current.user }
   belongs_to :account, default: -> { creator.account }
