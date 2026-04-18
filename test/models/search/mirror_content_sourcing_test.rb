@@ -91,4 +91,74 @@ class Search::MirrorContentSourcingTest < ActiveSupport::TestCase
     # the mirror procedures' content sourcing.
     assert_equal 32.kilobytes, Searchable::SEARCH_CONTENT_LIMIT
   end
+
+  # ----- CommentMirror.call (S9 F.6 / pmi.6) Search::Record sourcing -----
+
+  test "CommentMirror.call writes a Search::Record row keyed by the Comment id" do
+    Beads::Mirror::IssueMirror.call(
+      { id: "fizzy-cmt-001", status: "open", title: "Card with comments" },
+      account_id: @account.id, board_id: @board.id, creator_id: users(:david).id
+    )
+    comment_id = SecureRandom.uuid
+    Beads::Mirror::CommentMirror.call(
+      { id: comment_id, issue_id: "fizzy-cmt-001", text: "Searchable comment body", created_at: Time.current, author: users(:david).identity.email_address },
+      account_id: @account.id
+    )
+
+    record = Search::Record.find_by(searchable_type: "Comment", searchable_id: comment_id)
+    assert_not_nil record, "expected a Search::Record row to be upserted by CommentMirror"
+    assert_equal "fizzy-cmt-001", record.card_id
+    assert_equal @board.id, record.board_id
+    assert_includes record.content, "Searchable comment body"
+  end
+
+  test "CommentMirror is idempotent (replay updates content, doesn't duplicate Search::Record)" do
+    Beads::Mirror::IssueMirror.call(
+      { id: "fizzy-cmt-002", status: "open", title: "Card with comments" },
+      account_id: @account.id, board_id: @board.id, creator_id: users(:david).id
+    )
+    comment_id = SecureRandom.uuid
+    Beads::Mirror::CommentMirror.call(
+      { id: comment_id, issue_id: "fizzy-cmt-002", text: "Original", created_at: Time.current, author: users(:david).identity.email_address },
+      account_id: @account.id
+    )
+
+    assert_no_difference "Search::Record.count" do
+      Beads::Mirror::CommentMirror.call(
+        { id: comment_id, issue_id: "fizzy-cmt-002", text: "Updated", created_at: Time.current, author: users(:david).identity.email_address },
+        account_id: @account.id
+      )
+    end
+
+    record = Search::Record.find_by(searchable_type: "Comment", searchable_id: comment_id)
+    assert_includes record.content, "Updated"
+  end
+
+  # ----- Shard routing (S9 §F.3): CRC32(account_id) % 16 -----
+
+  test "shard routing algorithm is CRC32(account_id) % 16 (Trilogy/MySQL prod path)" do
+    # The 16-shard FTS pattern is preserved in production. In SQLite dev/test
+    # Search::Record uses a single table, but the Trilogy concern exposes
+    # `shard_id_for_account` for the prod path; assert its algorithm.
+    sample_account_id = "03ayaunetv3z4n681d58wdysd"
+    sharded = Class.new(ApplicationRecord) { include Search::Record::Trilogy }
+    expected_shard = Zlib.crc32(sample_account_id) % 16
+    assert_equal expected_shard, sharded.shard_id_for_account(sample_account_id)
+    assert (0..15).cover?(expected_shard), "shard id must be in [0..15]"
+    assert_equal Search::Record::Trilogy::SHARD_COUNT, 16
+  end
+
+  # ----- Search::Record.search returns mirrored content within one tick -----
+
+  test "Search::Record.search returns the freshly-mirrored Card content within one tick" do
+    Beads::Mirror::IssueMirror.call(
+      { id: "fizzy-srch-card", status: "open", title: "Searchable just-mirrored title XYZ" },
+      account_id: @account.id, board_id: @board.id, creator_id: users(:david).id
+    )
+
+    user = users(:david)
+    results = Search::Record.search("XYZ", user: user)
+    titles = results.to_a.map(&:title)
+    assert titles.any? { |t| t.to_s.include?("XYZ") }, "expected freshly mirrored Card to surface in Search::Record.search results"
+  end
 end
