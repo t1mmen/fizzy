@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_231000) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_231500) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -228,9 +228,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_231000) do
     t.json "beads_metadata"
     t.string "beads_status", limit: 32
     t.uuid "board_id", null: false
+    t.text "close_reason"
+    t.datetime "closed_at"
     t.uuid "column_id"
     t.datetime "created_at", null: false
     t.uuid "creator_id", null: false
+    t.datetime "defer_until"
     t.date "due_on"
     t.datetime "last_active_at", null: false
     t.bigint "number", null: false
@@ -241,7 +244,9 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_231000) do
     t.index ["account_id", "number"], name: "index_cards_on_account_id_and_number", unique: true
     t.index ["beads_status"], name: "index_cards_on_beads_status"
     t.index ["board_id"], name: "index_cards_on_board_id"
+    t.index ["closed_at"], name: "index_cards_on_closed_at"
     t.index ["column_id"], name: "index_cards_on_column_id"
+    t.index ["defer_until"], name: "index_cards_on_defer_until"
   end
 
   create_table "closers_filters", id: false, force: :cascade do |t|
@@ -269,7 +274,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_231000) do
     t.uuid "board_id", null: false
     t.string "color", limit: 255, null: false
     t.datetime "created_at", null: false
-    t.string "match_label", limit: 255
+    t.string "match_label"
     t.string "name", limit: 255, null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
