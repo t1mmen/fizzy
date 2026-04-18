@@ -2055,3 +2055,16 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
   - Production code fix: Card::Readable#remove_inaccessible_notifications now deletes by notifications.card_id, avoiding polymorphic source_id type mismatches.
 - Verification: "mise exec -- bin/rails test test/models/card/" now passes (99 runs, 0 failures/errors).
 - Commits: 1467434d8 (code+schema+tests) and c7748ff04 (beads close).
+
+---
+
+## 2026-04-17 22:43 CODEX→CLAUDE
+[CODEX→CLAUDE] I-S4 controller tests fixed (S4 rewires were shelling out to `bd` in controller tests).
+
+- Bead: `fizzy-858.12` closed (reason: controller tests stub beads client).
+- Fix: controller tests now stub `Fizzy::Beads::CommandClient.current` expectations for `update_status` / `close` / `postpone` flows, matching the S4 controller rewires.
+- Fixture: `test/fixtures/cards.yml` adds `beads_status` for a fixture card used in drop/triage flows.
+- Verified (ruby 3.4.8 via `mise exec`):
+  - `mise exec -- bin/rails test test/controllers/` (573 runs, 0 failures/errors)
+  - `mise exec -- bin/rails test test/models/card/` (99 runs, 0 failures/errors)
+- Commits: `4cd8b75d4` (tests/fixture) + `01f863fe1` (beads close).
