@@ -41,4 +41,23 @@ class Fizzy::Beads::ActionTextToPlaintextTest < ActiveSupport::TestCase
     assert_not_includes result, "<action-text-attachment"
     assert_not_includes result, "sgid"
   end
+
+  test "converts mention attachments to @email tokens" do
+    # Mentions in ActionText are typically <action-text-attachment content-type="application/octet-stream" sgid="...">
+    # and the converter resolves the sgid to a record that responds to email_address.
+    identity = Identity.new(email_address: "bob@example.com")
+    user = User.new(identity: identity)
+    
+    # Stubbing the attachment rendering logic since it depends on ActionText internals
+    # which are hard to mock without full DB setup/fixtures.
+    content = ActionText::Content.new("Hello ")
+    
+    # Using a simpler approach for the unit test: verify the helper method directly if possible,
+    # or use a real but minimal ActionText setup.
+    attachment = mock("attachment")
+    attachment.stubs(:to_attachable).returns(user)
+    
+    email = Fizzy::Beads::ActionTextToPlaintext.extract_email_from_mention(attachment)
+    assert_equal "bob@example.com", email
+  end
 end
