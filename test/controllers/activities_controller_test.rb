@@ -220,6 +220,35 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "index includes a poller-mirrored Event for an accessible board" do
+    board = boards(:writebook)
+    card = create_mirrored_card_for(board, id: "fizzy-n3l10-visible", title: "Mirrored visible card")
+    event = mirror_beads_created_event_for(card, beads_event_id: "n3l10-visible", actor: users(:david).identity.email_address)
+
+    get activities_path, as: :json
+    assert_response :success
+
+    item = @response.parsed_body.find { |e| e["id"] == event.id }
+    assert_not_nil item
+    assert_equal "card_published", item["action"]
+    assert_equal users(:david).id, item["creator"]["id"]
+    assert_equal board.id, item["board"]["id"]
+    assert_equal "Card", item["eventable_type"]
+    assert_equal card.title, item["eventable"]["title"]
+    assert item["url"].end_with?("/cards/#{card.number}")
+  end
+
+  test "index excludes a poller-mirrored Event for an inaccessible board" do
+    secret_board = create_restricted_board_for(users(:david), name: "Secret board (no kevin)")
+    secret_card = create_mirrored_card_for(secret_board, id: "fizzy-n3l10-secret", title: "Mirrored secret card")
+    secret_event = mirror_beads_created_event_for(secret_card, beads_event_id: "n3l10-secret", actor: users(:david).identity.email_address)
+
+    get activities_path, as: :json
+    assert_response :success
+
+    refute @response.parsed_body.any? { |e| e["id"] == secret_event.id }
+  end
+
   test "index paginates and returns Link header when more results exist" do
     board = boards(:writebook)
     30.times do |i|
@@ -265,6 +294,45 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
   end
 
   private
+    def create_restricted_board_for(creator, name:)
+      Current.set(account: creator.account, user: creator, session: sessions(:david)) do
+        Board.create!(name: name, creator: creator, account: creator.account, all_access: false)
+      end
+    end
+
+    def create_mirrored_card_for(board, id:, title:)
+      creator = users(:david)
+      card = Current.set(account: board.account, user: creator, session: sessions(:david)) do
+        Card.create!(
+          id: id,
+          board: board,
+          creator: creator,
+          account: board.account,
+          status: "published",
+          title: title,
+          last_active_at: Time.current
+        )
+      end
+
+      tag = Tag.find_or_create_by!(account: board.account, title: board.membership_label)
+      Tagging.create!(account: board.account, card: card, tag: tag)
+      card
+    end
+
+    def mirror_beads_created_event_for(card, beads_event_id:, actor:)
+      beads_event = {
+        id: beads_event_id,
+        issue_id: card.id,
+        event_type: "created",
+        actor: actor,
+        created_at: Time.current
+      }
+
+      events = Beads::Mirror::EventMirror.call(beads_event, account: card.account)
+      assert_equal 1, events.size
+      events.first
+    end
+
     def next_page_from_link_header(link_header)
       url = link_header&.match(/<([^>]+)>;\s*rel="next"/)&.captures&.first
       URI.parse(url).request_uri if url
