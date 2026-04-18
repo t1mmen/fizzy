@@ -59,6 +59,12 @@ module Beads
       # Per-source procedure registry. pmi.3 (mirror_issue), pmi.5 (label
       # delta), pmi.6 (comment mirror), pmi.7 (event mirror) wire entries
       # here as they ship. Until then, all sources hit stub_advance.
+      #
+      # NOTE on ISSUES_SNAPSHOT: the procedure that iterates Beads issues
+      # and calls IssueMirror.call per-issue is wired by the
+      # orchestration bead (separate from pmi.3 which only ships the
+      # per-issue procedure). Until that lands, ISSUES_SNAPSHOT hits
+      # stub_advance.
       PROCEDURES = {}
 
       def self.stub_advance(cursor)
