@@ -313,7 +313,7 @@ The S9 poller does NOT mirror Beads assignee → Fizzy assignments (that would c
 
 ### G.2 Fork behavior (post-S5)
 
-- `#create` validates the user-typed title against Tag validations (downcase, reject `#`, reject `^fizzy/`).
+- `#create` runs the user-typed title through `LabelNormalizer.call` (downcase, reject `#`, reject empty) and `ReservedNamespace.violates?` (reject `^fizzy/`). On either rejection, returns 422 with a clear error message.
 - On validation pass: `Fizzy::Beads::CommandClient.current.add_label(card.id, title)`.
 - Does NOT directly create Tag/Tagging — that's the poller's job (eventually consistent on next tick).
 - Returns the (optimistic) Tag/Tagging shape for the UI to render immediately.
@@ -323,8 +323,16 @@ class Cards::TaggingsController < ApplicationController
   before_action :set_card
 
   def create
-    title = Fizzy::Beads::LabelNormalizer.call(params[:title])
-    raise ArgumentError, "reserved namespace" if title.start_with?("fizzy/")
+    title =
+      begin
+        Fizzy::Beads::LabelNormalizer.call(params[:title])
+      rescue Fizzy::Beads::LabelNormalizer::InvalidLabelError => e
+        return render json: { error: e.message }, status: :unprocessable_entity
+      end
+
+    if Fizzy::Beads::ReservedNamespace.violates?(title)
+      return render json: { error: "label cannot use reserved fizzy/ namespace" }, status: :unprocessable_entity
+    end
 
     Fizzy::Beads::CommandClient.current.add_label(@card.id, title)
 
@@ -386,9 +394,16 @@ Existing `within_limit` (capped at 100) stays. The Beads sync runs only after th
 - `remove_label`, `set_labels` argv composition.
 - `set_assignee("ID-1", "")` → empty value passed correctly.
 
+`test/lib/fizzy/beads/reserved_namespace_test.rb`:
+- `violates?("fizzy/board/abc")` → true.
+- `violates?("Fizzy/board/abc")` → true (case-insensitive after normalization).
+- `violates?("backend")` → false.
+- `violates?("teamfizzy/foo")` → false (only leading `fizzy/` is reserved).
+- Composes with `LabelNormalizer.call` so leading-`#`/empty inputs raise before namespace check.
+
 `test/models/tag_test.rb`:
 - Existing `format: { without: /\A#/ }` validation continues to reject `#tag`.
-- New `RESERVED_NAMESPACE` validation rejects `fizzy/anything`.
+- Tag model accepts `fizzy/board/<uuid>` titles (poller mirror path must work; namespace policy is enforced at controller + CommandClient layers, NOT at AR model).
 
 ### I.2 Integration tests
 
