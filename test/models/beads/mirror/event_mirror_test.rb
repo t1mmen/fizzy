@@ -65,6 +65,56 @@ class Beads::Mirror::EventMirrorTest < ActiveSupport::TestCase
     end
   end
 
+  test "idempotent replay does not enqueue NotifyRecipientsJob or WebhookDispatchJob twice" do
+    beads_event_id = SecureRandom.uuid
+    beads_event = {
+      id: beads_event_id,
+      issue_id: @card.id,
+      event_type: "created",
+      actor: @user.identity.email_address,
+      created_at: Time.current
+    }
+
+    assert_enqueued_with(job: NotifyRecipientsJob) do
+      assert_enqueued_with(job: Event::WebhookDispatchJob) do
+        Beads::Mirror::EventMirror.call(beads_event)
+      end
+    end
+
+    clear_enqueued_jobs
+    assert_no_enqueued_jobs(only: [ NotifyRecipientsJob, Event::WebhookDispatchJob ]) do
+      Beads::Mirror::EventMirror.call(beads_event)
+    end
+  end
+
+  test "events.beads_event_id is unique at the DB level" do
+    beads_event_id = "event:db-unique-001"
+
+    Event.create!(
+      action: "card_published",
+      beads_event_id: beads_event_id,
+      creator: @user,
+      eventable: @card,
+      board: @board,
+      account: @account,
+      created_at: Time.current,
+      particulars: {}
+    )
+
+    assert_raises(ActiveRecord::RecordNotUnique) do
+      Event.create!(
+        action: "card_published",
+        beads_event_id: beads_event_id,
+        creator: @user,
+        eventable: @card,
+        board: @board,
+        account: @account,
+        created_at: Time.current,
+        particulars: {}
+      )
+    end
+  end
+
   test "unmapped event types produce no Event row" do
     beads_event = {
       id: SecureRandom.uuid,
