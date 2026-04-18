@@ -36,16 +36,14 @@ class MirroredEventWebhookDeliveryTest < ActionDispatch::IntegrationTest
 
   private
     def mirror_event!(beads_event_id:)
-      Event.create!(
-        board: @board,
-        creator: @creator,
-        eventable: @card,
-        action: "card_closed",
-        beads_event_id: beads_event_id,
-        particulars: {}
-      )
-    rescue ActiveRecord::RecordNotUnique
-      Event.find_by!(beads_event_id: beads_event_id)
+      beads_event = {
+        id: beads_event_id,
+        issue_id: @card.id,
+        event_type: "closed",
+        actor: @creator.identity.email_address,
+        created_at: Time.current
+      }
+
+      Beads::Mirror::EventMirror.call(beads_event, account: @board.account)
     end
 end
-

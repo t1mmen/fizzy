@@ -16,13 +16,23 @@ class MirroredEventNotificationsTest < ActionDispatch::IntegrationTest
   end
 
   test "card_assigned event notifies the assignee (excluding creator) and creates a bundle window" do
-    event = nil
+    beads_event_id = "beads-event-assigned-001"
+    beads_event = {
+      id: beads_event_id,
+      issue_id: @card.id,
+      event_type: "updated",
+      actor: @david.identity.email_address,
+      created_at: Time.current,
+      old_value: { "assignee" => nil }.to_json,
+      new_value: { "assignee" => @kevin.identity.email_address }.to_json
+    }
 
     assert_enqueued_with(job: NotifyRecipientsJob) do
-      event = mirror_card_assigned_event!(assignee: @kevin, creator: @david, beads_event_id: "beads-event-assigned-001")
+      Beads::Mirror::EventMirror.call(beads_event, account: @board.account)
     end
     perform_enqueued_jobs(only: NotifyRecipientsJob)
 
+    event = Event.find_by!(beads_event_id: "event:#{beads_event_id}")
     notification = Notification.find_by!(user: @kevin, card: @card)
     assert_equal event, notification.source
     assert_equal @david, notification.creator
@@ -32,18 +42,25 @@ class MirroredEventNotificationsTest < ActionDispatch::IntegrationTest
     bundle = @kevin.notification_bundles.pending.last
     assert_not_nil bundle
     assert_includes bundle.notifications, notification
+
+    clear_enqueued_jobs
+    assert_no_difference "Notification.count" do
+      assert_no_enqueued_jobs(only: NotifyRecipientsJob) do
+        Beads::Mirror::EventMirror.call(beads_event, account: @board.account)
+      end
+    end
   end
 
   test "comment_created event notifies watchers excluding author and creates a bundle window" do
     comment = Comment.create!(card: @card, creator: @david, body: "hello")
-    event = nil
 
     assert_enqueued_with(job: NotifyRecipientsJob) do
-      event = mirror_comment_created_event!(comment:, creator: @david, beads_event_id: "beads-event-comment-001")
+      Beads::Mirror::CommentEvent.call(comment)
     end
     perform_enqueued_jobs(only: NotifyRecipientsJob)
 
     notification = Notification.find_by!(user: @kevin, card: @card)
+    event = Event.find_by!(beads_event_id: "comment:#{comment.id}")
     assert_equal event, notification.source
     assert_equal @david, notification.creator
 
@@ -52,32 +69,12 @@ class MirroredEventNotificationsTest < ActionDispatch::IntegrationTest
     bundle = @kevin.notification_bundles.pending.last
     assert_not_nil bundle
     assert_includes bundle.notifications, notification
+
+    clear_enqueued_jobs
+    assert_no_difference "Notification.count" do
+      assert_no_enqueued_jobs(only: NotifyRecipientsJob) do
+        Beads::Mirror::CommentEvent.call(comment)
+      end
+    end
   end
-
-  private
-    def mirror_card_assigned_event!(assignee:, creator:, beads_event_id:)
-      Event.create!(
-        board: @board,
-        creator: creator,
-        eventable: @card,
-        action: "card_assigned",
-        beads_event_id: beads_event_id,
-        particulars: { assignee_ids: [ assignee.id ] }
-      )
-    rescue ActiveRecord::RecordNotUnique
-      Event.find_by!(beads_event_id: beads_event_id)
-    end
-
-    def mirror_comment_created_event!(comment:, creator:, beads_event_id:)
-      Event.create!(
-        board: @board,
-        creator: creator,
-        eventable: comment,
-        action: "comment_created",
-        beads_event_id: beads_event_id,
-        particulars: {}
-      )
-    rescue ActiveRecord::RecordNotUnique
-      Event.find_by!(beads_event_id: beads_event_id)
-    end
 end
