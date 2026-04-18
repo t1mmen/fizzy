@@ -91,4 +91,23 @@ class Fizzy::Beads::CommandClientTest < ActiveSupport::TestCase
 
     assert_equal({ "id" => "fizzy-abc" }, client.read_issue("fizzy-abc"))
   end
+
+  test "undefer_issue optionally restores status via a second update" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+
+    sequence = sequence("bd")
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "undefer", "fizzy-abc").in_sequence(sequence).returns(["", "", ok_status])
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "update", "fizzy-abc", "--status", "open").in_sequence(sequence).returns(["", "", ok_status])
+
+    client.undefer_issue("fizzy-abc", restore_status: "open")
+  end
+
+  test "update_defer_until uses bd update --defer with RFC3339 string" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+
+    timestamp = "2026-04-18T03:43:56Z"
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "update", "fizzy-abc", "--defer", timestamp).returns(["", "", ok_status])
+
+    client.update_defer_until("fizzy-abc", until_time: timestamp)
+  end
 end
