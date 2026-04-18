@@ -75,6 +75,34 @@ module Fizzy
         invoke!([ "update", id.to_s, "--set-labels", normalized.join(",") ])
       end
 
+      # ------------------------------------------------------------------
+      # S5 F.4 — set_assignee (per S5 §C.1 + §F.3)
+      # email may be nil/empty to clear the Beads assignee.
+      # ------------------------------------------------------------------
+
+      def set_assignee(id, email_or_nil)
+        value = email_or_nil.to_s
+        invoke!([ "update", id.to_s, "--assignee", value ])
+      end
+
+      # ------------------------------------------------------------------
+      # S5 F.5 — system label methods (per S5 §C.4)
+      # Internal-only: callable from Fizzy system code paths that
+      # legitimately write fizzy/-prefixed labels (Board create/move via
+      # S2; future system label managers). NOT exposed to controllers
+      # (which use add_label/set_labels with the fizzy/ guard).
+      # ------------------------------------------------------------------
+
+      def _add_system_label(id, label)
+        normalized = LabelNormalizer.call(label)
+        invoke!([ "update", id.to_s, "--add-label", normalized ])
+      end
+
+      def _remove_system_label(id, label)
+        normalized = LabelNormalizer.call(label)
+        invoke!([ "update", id.to_s, "--remove-label", normalized ])
+      end
+
       private
 
       def invoke!(argv)
