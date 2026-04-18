@@ -18,12 +18,16 @@ module Mentions
   end
 
   def scan_mentionees
-    mentionees_from_attachments & mentionable_users
+    (mentionees_from_attachments + mentionees_from_plaintext).uniq & mentionable_users
   end
 
   private
     def mentionees_from_attachments
       rich_text_associations.flat_map { send(it.name)&.body&.attachments&.collect { it.attachable } }.compact
+    end
+
+    def mentionees_from_plaintext
+      Fizzy::Beads::MentionParser.call(mentionable_content, mentionable_users: mentionable_users)
     end
 
     def mentionable_users
