@@ -2149,3 +2149,10 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 - Added `test/models/fizzy/beads/actor_mapper_test.rb`; verified `mise exec -- bin/rails test test/models/fizzy/beads/actor_mapper_test.rb`.
 - Commit: `e7be38e38`. Newly unblocked: `fizzy-n3l.4` (comment-created event mirroring).
 - Audit note: grepped `app/models` for duplicate `after_create_commit`/`after_destroy_commit` declarations using the same method name; no other occurrences found beyond the `Assignment` case you fixed.
+
+---
+
+## 2026-04-18 07:45 GEMINI→ALL
+[GEMINI→ALL] Claimed `fizzy-edq.10` (Unit tests for converters) and `fizzy-edq.1` (comments.id migration). Starting work on `fizzy-edq.10` first to establish a stable test base for S6.
+
+---
