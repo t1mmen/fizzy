@@ -192,26 +192,27 @@ The following child task beads will be created via `bd create` and wired with `b
 | F.2 | Drop card_goldnesses table | task | 1 | F.1 |
 | F.3 | Drop card_activity_spikes table | task | 1 | F.1 |
 | F.4 | Drop card_not_nows table | task | 1 | F.1 |
-| F.5 | Drop closures table | task | 1 | F.1 |
-| F.6 | Drop taggings table | task | 1 | F.1 |
-| F.7 | Drop FK constraints from remaining child tables | task | 1 | F.2-F.6 |
-| F.8 | Widen FK columns: assignments.card_id | task | 1 | F.7 |
-| F.9 | Widen FK columns: comments.card_id + comments.id | task | 1 | F.7 |
-| F.10 | Widen FK columns: steps.card_id | task | 1 | F.7 |
-| F.11 | Widen FK columns: pins.card_id | task | 1 | F.7 |
-| F.12 | Widen FK columns: watches.card_id | task | 1 | F.7 |
-| F.13 | Widen FK columns: notifications.card_id + source_id | task | 1 | F.7 |
-| F.14 | Widen polymorphic: events.eventable_id | task | 1 | F.7 |
-| F.15 | Widen polymorphic: mentions.source_id | task | 1 | F.7 |
-| F.16 | Widen polymorphic: reactions.reactable_id | task | 1 | F.7 |
-| F.17 | Widen polymorphic: action_text_rich_texts.record_id | task | 1 | F.7 |
-| F.18 | Widen polymorphic: active_storage_attachments.record_id | task | 1 | F.7 |
-| F.19 | Widen polymorphic: search_records_* (16 shards) | task | 1 | F.7 |
-| F.20 | Widen cards.id PK | task | 1 | F.8-F.19 |
-| F.21 | Re-add FK constraints | task | 1 | F.20 |
-| F.22 | Schema verification + rollback test (full forward+down+forward) | task | 1 | F.21 |
+| F.7 | Drop FK constraints from remaining child tables (assignments, closures, taggings, comments, steps, pins, watches, notifications) | task | 1 | F.2-F.4 |
+| F.5 | Widen closures.card_id (P9 mirror; v2 corrected from drop) | task | 1 | F.7 |
+| F.6 | Widen taggings.card_id (P9 mirror; v2 corrected from drop) | task | 1 | F.7 |
+| F.8 | Widen assignments.card_id | task | 1 | F.7 |
+| F.9 | Widen comments.card_id only (NOT comments.id; S6 owns) | task | 1 | F.7 |
+| F.10 | Widen steps.card_id | task | 1 | F.7 |
+| F.11 | Widen pins.card_id | task | 1 | F.7 |
+| F.12 | Widen watches.card_id | task | 1 | F.7 |
+| F.13 | Widen notifications.card_id + source_id | task | 1 | F.7 |
+| F.14 | Widen events.eventable_id (polymorphic) | task | 1 | F.7 |
+| F.15 | Widen mentions.source_id (polymorphic) | task | 1 | F.7 |
+| F.16 | Widen reactions.reactable_id (polymorphic) | task | 1 | F.7 |
+| F.17 | Widen action_text_rich_texts.record_id (polymorphic) | task | 1 | F.7 |
+| F.18 | Widen active_storage_attachments.record_id (polymorphic) | task | 1 | F.7 |
+| F.18b | Widen storage_entries.recordable_id (polymorphic; v2 added per Gemini catch) | task | 1 | F.7 |
+| F.19 | Widen search_records_0..15: card_id AND searchable_id (16 shards each) | task | 1 | F.7 |
+| F.20 | Widen cards.id PK (keystone) | task | 0 | F.5, F.6, F.8-F.19, F.18b |
+| F.21 | Re-add FK constraints (assignments, closures, taggings, comments, steps, pins, watches, notifications) | task | 1 | F.20 |
+| F.22 | Schema verification + rollback test (full forward+down+forward) | task | 0 | F.21 |
 
-22 child beads total. The actual `bd create` calls happen in §I.
+23 child beads total (was 22 in v1; F.18b added). The actual `bd create` calls happen in §I.
 
 ---
 
