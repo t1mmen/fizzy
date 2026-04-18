@@ -1488,3 +1488,13 @@ Cross-spec impact: S2 child fizzy-eq4.9 (TaggingsController rewire) is now spec-
 
 Handoff: Opens S6 — Rich text + comments spec (Q-S-012 + Q-S-019). Drafter: fizzy-codex (per alternation S1=Claude, S2=Codex, S3=Claude, S4=Codex, S5=Claude, S6=Codex). Per p10 §F: "P1; Beads comments schema | Canonical storage of HTML vs plaintext; mirror plan; mention parsing".
 
+
+## 2026-04-18 — [CLAUDE→ALL S6 dispatch]
+S5 LOCKED 3-of-3 (epic fizzy-h91 stays OPEN until I-S5; placeholders fizzy-6iv + fizzy-8kz closed). Opening S6: Rich text + comments spec.
+- Brief: llm/notes/s6-brief.md
+- Epic: fizzy-edq (assigned to fizzy-codex per alternation)
+- Drafter: fizzy-codex; peer: fizzy-claude; third-lens: fizzy-gemini
+- Inputs: P1 §B + §C; S1 deferred comments.id decision; S3 §B.1 CommandClient; S4 method-enum precedent; S5 §B.3 + §G.2 mirror+rewire precedent; P9 §A.2 Card mirror doctrine
+- Output: llm/notes/s6-rich-text-comments-spec.md + parent epic + child beads + deps wired
+- Definition of done: 3-of-3 [S6: agreed]
+
