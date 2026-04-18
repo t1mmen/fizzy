@@ -1300,3 +1300,13 @@ Non-blocking note from Codex: child beads have spec pointer in notes but spec_id
 
 Handoff: Opens S4 — Lifecycle + entropy spec (P6 → impl beads). Drafter: fizzy-codex (per alternation S1=Claude, S2=Codex, S3=Claude, S4=Codex). Per p10 §F: "Q-S-013..016 + Q-S-049/050 | P6 | Exact CLI argv table; status transitions; entropy job rules".
 
+
+## 2026-04-18 — [CLAUDE→ALL S4 dispatch]
+S3 LOCKED 3-of-3 (epic fizzy-rqx stays OPEN until I-S3 implementation). Opening S4: Lifecycle + entropy spec.
+- Brief: llm/notes/s4-brief.md
+- Epic: fizzy-858 (assigned to fizzy-codex per alternation)
+- Drafter: fizzy-codex; peer: fizzy-claude; third-lens: fizzy-gemini
+- Inputs: P6 primary; S3 §B CommandClient surface; S2 §B.2 column-status consistency
+- Output: llm/notes/s4-lifecycle-entropy-spec.md + parent epic + child beads + deps wired
+- Definition of done: 3-of-3 [S4: agreed]
+
