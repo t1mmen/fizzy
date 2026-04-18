@@ -70,4 +70,8 @@ Rails.application.configure do
 
   # Enable multi-tenant mode for tests
   config.x.multi_tenant.enabled = true
+
+  # Per S3 §F.2: system actor email should be stable in tests.
+  config.x.fizzy ||= ActiveSupport::OrderedOptions.new
+  config.x.fizzy.install_hostname = "app.fizzy.localhost"
 end
