@@ -198,9 +198,29 @@ This rule applies even when the file looks like junk. "Looks like junk" has hist
 - `llm/notes/<round>-*.md` — round artifacts; only the drafter edits during draft phase, peers only when reviewing per `skills/round-protocol.md`
 - Code files — owned by the implementation round currently consuming them (per round writable-scope declaration)
 
+### Commit discipline (added 2026-04-18 per CEO directive)
+
+Multi-agent shared working tree means uncommitted changes are visible to and may interfere with peers. To prevent loss-of-work + cross-attribution + ownership confusion, follow these rules strictly:
+
+1. **Each agent only commits its OWN work.** If your `git status` shows files you didn't author, do NOT include them in your commit. Either commit-on-behalf with a clear "persist <peer> work on their behalf" message, OR wait for the owning peer to commit (preferred: ping them via tmux first).
+
+2. **Don't interfere with a peer's mid-commit.** If you see staged or recently-modified files belonging to another agent, do NOT `git reset HEAD`, do NOT `git stash`, do NOT `git restore`. Wait. Ping the owning agent via tmux: "I see uncommitted X — yours? Commit when ready, blocking my Y."
+
+3. **Commit happens IMMEDIATELY after edit — no long staging periods.** Edit → test → commit → push. Aim for <2 minutes between first save and `git push`. Never leave files unstaged on disk while you go work on something else.
+
+4. **Stage ONLY your own files explicitly by path.** Avoid `git add .`, `git add -A`, `git add -u` — these sweep up peer work + auto-generated drift (e.g. `db/cable_schema.rb` regression from cross-adapter migrations). Always `git add path/to/your/file.rb path/to/your/test.rb`.
+
+5. **`git stash` is destructive across agents.** A stashed-on-behalf-of-peer is the equivalent of "I revert your work into a sidekick storage." Per rule 2: don't do this; commit-on-behalf instead.
+
+6. **If a commit fails (lefthook gripe, conflict, etc.) — debug and retry within minutes, not hours.** Long-pending failures leave the tree dirty for peers.
+
 ### Failure mode log
 
 - **2026-04-18**: Codex investigated uncommitted `llm/gemini-state.md` and almost reverted it as "stray junk". CEO intervened. Recovery: Claude committed gemini-state on Gemini's behalf and pushed; Codex pulled. Lesson encoded above.
+
+- **2026-04-18**: Claude shipped fizzy-7ka + fizzy-ml5 drop migrations (Card::Goldness/ActivitySpike tables) but did not also ship the corresponding model + concern + JS removal. Test suite + app boot broke via `load_schema!` "Could not find table" errors. Recovery: forward-restore migrations (`f3828d4d4`) re-created the tables; both beads reopened with detailed cleanup-prerequisite notes. Lesson: when a migration drops a table, confirm via grep that NO model class references it; if any do, the table-drop bead requires a code-cleanup prerequisite bead.
+
+- **2026-04-18**: Claude attempted fizzy-c3z (Storage quota enforcement) work spanning 4 files, left them uncommitted on disk while doing other work. Codex pulled, saw "stray uncommitted code" not theirs, stashed it for safekeeping. Claude's stash recovery was incomplete (mixed with Codex's CommandClient files); CEO intervened. Recovery: stash dropped; c3z stays open for a re-attempt with strict commit discipline (per rules above). Lesson: codified rules 1-6 above.
 
 <!-- BEGIN BEADS INTEGRATION v:1 profile:minimal hash:ca08a54f -->
 ## Beads Issue Tracker
