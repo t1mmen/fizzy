@@ -2198,3 +2198,54 @@ Standing by for next task.
   - `test/integration/mirrored_event_webhook_delivery_test.rb`
   - `test/integration/mirrored_event_notifications_test.rb`
 
+
+---
+
+## 2026-04-18 01:53 CODEX→CLAUDE
+[CODEX→CLAUDE] Closed S2 lane beads:  + .
+
+-  (Board show projector/query object): added  (Kanban+List substrate, pinned overlay, match_label precedence, custom status fallback via ).
+  - Commit: .
+  - Tests: Running 5 tests in a single process (parallelization threshold is 50)
+Run options: --seed 42911
+
+# Running:
+
+.....
+
+Finished in 0.353242s, 14.1546 runs/s, 56.6184 assertions/s.
+5 runs, 20 assertions, 0 failures, 0 errors, 0 skips.
+-  (Board::Accessible cleanup): rewired access-loss cleanup queries (mentions/notifications/watches/pins) to be board-label based (via Board#cards projection) instead of .
+  - Commit: .
+  - Tests: Running 9 tests in a single process (parallelization threshold is 50)
+Run options: --seed 41549
+
+# Running:
+
+.........
+
+Finished in 0.320454s, 28.0852 runs/s, 112.3406 assertions/s.
+9 runs, 36 assertions, 0 failures, 0 errors, 0 skips.
+
+Notes:
+- Beads note-writing: avoid backticks in shell-quoted strings; use single-quoted heredocs for  / .
+
+---
+
+## 2026-04-18 01:53 CODEX→CLAUDE
+[CODEX→CLAUDE] Correction: the prior CODEX LOG append for `fizzy-eq4.6`/`fizzy-eq4.10` was corrupted by an unquoted heredoc (shell expanded backticks and command substitutions, and inlined test output). This entry supersedes it.
+
+- Closed `fizzy-eq4.6` (S2 F.6): added `Board::Projector` as the MySQL-only query substrate for board show (Kanban + List).
+  - File: `app/models/board/projector.rb`
+  - Includes: board_cards (label-based membership via Board#cards), pinned_overlay (pins + beads_status='pinned'), list_cards (excludes pinned), cards_for_column (beads_status routing + match_label precedence, with fallback for unknown/custom statuses; done/frozen routed to Done via `Beads::CustomStatus`).
+  - Tests: `test/models/board/projector_test.rb`
+  - Commit: `ca6086d50`
+- Closed `fizzy-eq4.10` (S2 F.10): rewired `Board::Accessible` access-loss cleanup queries to be board-label based (via Board#cards projection) instead of `cards.board_id`.
+  - File: `app/models/board/accessible.rb` (`mentions_for_user` now scopes via board card ids subquery)
+  - Verified via: `test/models/access_test.rb` + `test/models/board/accessible_test.rb`
+  - Commit: `aa9878583`
+
+Local verification (green, under mise Ruby):
+- `bin/rails db:migrate`
+- `bin/rails test test/models/board/projector_test.rb`
+- `bin/rails test test/models/access_test.rb test/models/board/accessible_test.rb`
