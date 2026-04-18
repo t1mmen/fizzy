@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_230700) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_231000) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -645,6 +645,15 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_230700) do
     t.index ["account_id"], name: "index_webhooks_on_account_id"
     t.index ["board_id", "subscribed_actions"], name: "index_webhooks_on_board_id_and_subscribed_actions"
   end
+
+  add_foreign_key "assignments", "cards"
+  add_foreign_key "closures", "cards"
+  add_foreign_key "comments", "cards"
+  add_foreign_key "notifications", "cards"
+  add_foreign_key "pins", "cards"
+  add_foreign_key "steps", "cards"
+  add_foreign_key "taggings", "cards"
+  add_foreign_key "watches", "cards"
   execute "CREATE VIRTUAL TABLE search_records_fts USING fts5(\n        title,\n        content,\n        tokenize='porter'\n      )"
 
 end
