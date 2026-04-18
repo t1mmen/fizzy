@@ -433,25 +433,25 @@ Per `skills/test-discipline.md`: integration tests must hit a real CommandClient
 
 ## §J — Child bead inventory
 
-Child beads (I-S3 implementation tasks) are minted under epic `fizzy-rqx`.
+Child beads (I-S3 implementation tasks) are minted under epic `fizzy-rqx`. (bd auto-generated random suffix IDs; the F.N labels are stable spec-side names that map to bead IDs below.)
 
 All beads below are wired as:
 - parent-child to `fizzy-rqx`
 - intra-S3 `blocks` edges reflecting implementation ordering
-- cross-spec `blocks` edges to S2 children that consume CommandClient (`fizzy-eq4.8`, `fizzy-eq4.9`)
+- cross-spec `blocks` edges to S2 children that consume CommandClient (`fizzy-eq4.8`)
 
-| Bead | Title | Satisfies | Key dependencies |
-|---|---|---|---|
-| `fizzy-rqx.1` | Add `:actor` to `Current` + populate via `identity=` setter | §A.5 | none (additive) |
-| `fizzy-rqx.2` | Implement `SystemActor` accessor + install_hostname config | §F.2 | none |
-| `fizzy-rqx.3` | Migration: bootstrap system Identity + system User at install | §F.3 (a) | `fizzy-rqx.2` |
-| `fizzy-rqx.4` | Implement `Fizzy::Beads::CommandClient` class (`#invoke!`, `.for`, `.current`, error classes) | §B.1, §B.2, §B.4 | `fizzy-rqx.1` |
-| `fizzy-rqx.5` | `ApplicationController` `before_action :set_current_actor` (defense-in-depth) | §C.1, §C.2 | `fizzy-rqx.1` |
-| `fizzy-rqx.6` | `BeadsActorTenanted` concern + prepend in `FizzyActiveJobExtensions` | §D.1, §D.2 | `fizzy-rqx.1` |
-| `fizzy-rqx.7` | Unit tests: CommandClient + Current + SystemActor | §H.1 | `fizzy-rqx.4`, `fizzy-rqx.2` |
-| `fizzy-rqx.8` | Integration tests: web cookie + bearer-token actor propagation | §H.2 | `fizzy-rqx.5`, `fizzy-rqx.4` |
-| `fizzy-rqx.9` | Job tests: BeadsActorTenanted serialize/restore + CommandClient.current in jobs | §H.3 | `fizzy-rqx.6`, `fizzy-rqx.4` |
-| `fizzy-rqx.10` | Wire S2 controllers (`fizzy-eq4.8`) to CommandClient.current — unblock S2 implementation | §C.3 | `fizzy-rqx.4`, `fizzy-rqx.5` (cross-spec: blocks `fizzy-eq4.8`) |
+| F.N | Bead | Title | Satisfies | Key dependencies |
+|---|---|---|---|---|
+| F.1 | `fizzy-r4v` | Add `:actor` to `Current` + populate via `identity=` setter | §A.5 | none (additive) |
+| F.2 | `fizzy-du0` | Implement `SystemActor` accessor + install_hostname config | §F.2 | none |
+| F.3 | `fizzy-7j3` | Migration: bootstrap system Identity + system User at install | §F.3 (a) | `fizzy-du0` |
+| F.4 | `fizzy-5jt` | Implement `Fizzy::Beads::CommandClient` class (`#invoke!`, `.for`, `.current`, error classes) | §B.1, §B.2, §B.4 | `fizzy-r4v` |
+| F.5 | `fizzy-3ad` | `ApplicationController` `before_action :set_current_actor` (defense-in-depth) | §C.1, §C.2 | `fizzy-r4v` |
+| F.6 | `fizzy-1s3` | `BeadsActorTenanted` concern + prepend in `FizzyActiveJobExtensions` | §D.1, §D.2 | `fizzy-r4v` |
+| F.7 | `fizzy-90z` | Unit tests: CommandClient + Current + SystemActor | §H.1 | `fizzy-5jt`, `fizzy-du0` |
+| F.8 | `fizzy-qkc` | Integration tests: web cookie + bearer-token actor propagation | §H.2 | `fizzy-3ad`, `fizzy-5jt` |
+| F.9 | `fizzy-efe` | Job tests: BeadsActorTenanted serialize/restore + CommandClient.current in jobs | §H.3 | `fizzy-1s3`, `fizzy-5jt` |
+| F.10 | `fizzy-2ki` | Wire S2 controllers (`fizzy-eq4.8`) to CommandClient.current — unblock S2 implementation | §C.3 | `fizzy-5jt`, `fizzy-3ad` (cross-spec: `fizzy-eq4.8` blocked-by `fizzy-2ki`) |
 
 ## §K — Validation checklist
 
