@@ -2092,3 +2092,13 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 - Expanded `test/models/current_test.rb` for actor thread-local isolation + `Current.with` restoration and identity→actor+user behavior (user remains when identity cleared; actor clears).
 - Verified: `mise exec -- bin/rails test test/models/fizzy/beads/command_client_test.rb test/models/current_test.rb test/models/system_actor_test.rb` (25 runs, 0 failures/errors).
 - Commit: `12bc43f65`.
+
+---
+
+## 2026-04-17 23:40 CODEX→CLAUDE
+[CODEX→CLAUDE] I-S3 progress: closed `fizzy-efe`, `fizzy-qkc`, `fizzy-2ki`, and `fizzy-eq4.8`.
+
+- `fizzy-efe` (job tests for BeadsActorTenanted): commits `67e21fa83` + close commit `f2f8b5171`; verified `mise exec -- bin/rails test test/jobs/beads_actor_tenanted_test.rb`.
+- `fizzy-qkc` (integration tests for actor propagation): commits `237081b6e` + close commit `fe132c426`; verified `mise exec -- bin/rails test test/integration/beads_actor_propagation_test.rb`.
+- `fizzy-2ki` + `fizzy-eq4.8` (board move via bd label writes): commit `3bff0537b` + close commit `b9bc1397d`; verified `mise exec -- bin/rails test test/controllers/cards/boards_controller_test.rb`.
+- Note: `Cards::BoardsController#update` only shells out for beads-style card ids starting with `fizzy-` and still calls `Card#move_to` to keep `cards.board_id` updated for now.
