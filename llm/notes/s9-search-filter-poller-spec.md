@@ -33,15 +33,29 @@ Single engine = single source of ordering. NO parallel mirror workers in V1 (avo
 
 ### A.2 Per-source cursors
 
-The poller maintains independent cursors for each Beads canonical source. Stored in a small new MySQL table `beads_mirror_cursors(source varchar pk, last_seen_id varchar, last_advanced_at datetime)`:
+**IMPORTANT — Beads UUID semantics**: Beads `events.id` and `comments.id` are MySQL `uuid()` (v1 timestamp-MAC, not v7) — NOT monotonic across rows. Therefore the cursor MUST be timestamp-based, NOT id-based. (Per Gemini S9 prior #1.)
 
-| Source | Cursor key | Source query |
-|---|---|---|
-| `events` | `last_seen_id` = max processed `beads_events.id` | `SELECT * FROM events WHERE id > :cursor ORDER BY created_at, id LIMIT :batch` (Beads SQL via `:beads` connection) |
-| `comments` | `last_seen_id` = max processed `beads_comments.id` | `SELECT * FROM comments WHERE id > :cursor ORDER BY created_at, id LIMIT :batch` |
-| `issues_snapshot` | `last_advanced_at` = wall-clock | full periodic resync of all open issues (anti-drift; §D) |
+The poller maintains independent cursors for each Beads canonical source. Stored in a small new MySQL table `beads_mirror_cursors(source varchar pk, last_seen_at datetime(6), last_advanced_at datetime, processed_ids text)`:
 
-Cursor advance happens **only after the per-row mirror procedure commits its MySQL transaction**. A poller crash mid-tick replays the same Beads row on next tick — the per-procedure idempotency guarantees this is safe (B.1 + S8 §B.2 dedup unique index).
+- `last_seen_at` = `created_at` of the highest-watermark Beads row processed.
+- `processed_ids` = JSON array of Beads ids processed within the **overlap window** `(last_seen_at - overlap_seconds, last_seen_at]`. Used to dedupe rows that share the cursor's timestamp on next tick.
+- `overlap_seconds` = `2` (seconds) — covers MySQL `datetime(6)` precision + microsecond clock skew between Beads and Fizzy connections.
+
+| Source | Source query |
+|---|---|
+| `events` | `SELECT * FROM events WHERE created_at >= :cursor_at - INTERVAL :overlap SECOND ORDER BY created_at, id LIMIT :batch` (Beads SQL via `:beads` connection); skip rows whose id is in `processed_ids` |
+| `comments` | `SELECT * FROM comments WHERE created_at >= :cursor_at - INTERVAL :overlap SECOND ORDER BY created_at, id LIMIT :batch`; skip rows whose id is in `processed_ids` |
+| `issues_snapshot` | `last_advanced_at` = wall-clock; full periodic resync of all open issues (anti-drift; §D) |
+
+After a tick processes a batch:
+1. Find max `created_at` in the batch → new `last_seen_at`.
+2. Collect ids of rows with `created_at == new last_seen_at` → new `processed_ids`.
+3. Discard old `processed_ids` whose `created_at < new last_seen_at - overlap_seconds` (window slides forward).
+4. Commit the cursor row.
+
+Cursor advance happens **only after every per-row mirror procedure commits its MySQL transaction in the batch**. A poller crash mid-tick replays the entire batch on next tick — per-procedure idempotency (B.1 + S8 §B.2 dedup unique index + the `processed_ids` overlap-dedupe) keeps this safe.
+
+**Why this works**: even if two Beads rows have identical `created_at` and were created in different order than `id` would suggest, the overlap window guarantees we re-scan that timestamp band on next tick; the `processed_ids` set prevents reprocessing what we already did; the unique indexes catch any leakage.
 
 ### A.3 Batch size + backpressure
 
@@ -309,7 +323,7 @@ Child beads (I-S9 implementation tasks) minted under epic `fizzy-pmi`.
 
 | F.N | Bead | Title | Satisfies | Key dependencies |
 |---|---|---|---|---|
-| F.1 | `fizzy-pmi.1` | Add `beads_mirror_cursors` table + `Beads::Mirror::Cursor` model | §A.2 | none |
+| F.1 | `fizzy-pmi.1` | Add `beads_mirror_cursors` table (last_seen_at + processed_ids overlap window) + `Beads::Mirror::Cursor` model | §A.2 | none |
 | F.2 | `fizzy-pmi.2` | Implement `BeadsPoller` recurring job (30s tick, mirror-mode guard, single-engine) | §A.1, §A.4 | `fizzy-pmi.1`, `fizzy-du0` (S3 SystemActor), Current.beads_mirror? change from S8 (`fizzy-n3l.5`) |
 | F.3 | `fizzy-pmi.3` | Implement `mirror_issue` procedure (cards + Search::Record sync) | §C.1 | `fizzy-pmi.2`, `fizzy-m6r` (S1 cards.beads_status) |
 | F.4 | `fizzy-pmi.4` | Add `beads_custom_statuses` mirror table + refresh in periodic resync | §C.2, §D.1 | `fizzy-pmi.2` |
