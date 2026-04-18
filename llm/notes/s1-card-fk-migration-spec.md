@@ -48,22 +48,23 @@ Every Fizzy table that needs an FK type change. Sourced from P1 §A (entity inve
 
 ### B.1 Direct-FK tables (one-per-table beads)
 
+> **v2 corrections per Codex S1 review**: closures + taggings KEPT (not dropped) per P9 mirror doctrine. comments.id NOT widened (S6 territory; only card_id widens). search_records widens BOTH card_id AND searchable_id.
+
 | # | Table | FK column | Type change | Beads-side fact mirrored | Child bead |
 |---|---|---|---|---|---|
-| 1 | `closures` | `card_id` | uuid → varchar(255) | "card is closed" (status='closed') | TBD |
-| 2 | `card_not_nows` | `card_id` | uuid → varchar(255) | "card is deferred" (status='deferred') | TBD |
-| 3 | `card_goldnesses` | `card_id` | uuid → varchar(255) | (Fizzy-only per P4 — drop in fork? — see §B.4) | TBD |
-| 4 | `card_activity_spikes` | `card_id` | uuid → varchar(255) | (Fizzy-only per P6 — drop in fork? — see §B.4) | TBD |
-| 5 | `assignments` | `card_id` | uuid → varchar(255) | "primary assignee" mirrored to beads `assignee` (per P7 §A.2) | TBD |
-| 6 | `taggings` | `card_id` | uuid → varchar(255) | Per P7 §B.2 `taggings` may be dropped — see §B.5 | TBD |
-| 7 | `comments` | `card_id` | uuid → varchar(255) | Comments mirrored from beads `comments` (per P9 §C.2) | TBD |
-| 8 | `comments` | `id` | uuid → varchar(255) | comment mirror id = beads comment id | TBD |
-| 9 | `steps` | `card_id` | uuid → varchar(255) | Fizzy-only (Q-S-020 may drop in v1) | TBD |
-| 10 | `pins` | `card_id` | uuid → varchar(255) | Fizzy-only | TBD |
-| 11 | `watches` | `card_id` | uuid → varchar(255) | Fizzy-only | TBD |
-| 12 | `notifications` | `card_id` | uuid → varchar(255) | Fizzy-only | TBD |
-| 13 | `cards` | `id` (PK) | uuid → varchar(255) | Card mirror id = beads issue id | TBD |
-| 14 | `cards` | (NEW) `beads_status` | (add) varchar(32) | mirror beads `issues.status` (per P9 §A.2) | TBD |
+| 1 | `closures` | `card_id` | uuid → varchar(255) | Mirror of close events; poller writes via `Closure.upsert_all` per P9 §C.2 | `fizzy-flu` (F.5, repurposed v2) |
+| 2 | `card_not_nows` | (table dropped) | drop_table | NotNow becomes `status='deferred'` per P6 §C; no Fizzy table needed | `fizzy-0as` (F.4 drop) |
+| 3 | `card_goldnesses` | (table dropped) | drop_table | Goldness rendered from `priority=0` per P4 §G; no Fizzy table needed | `fizzy-7ka` (F.2 drop) |
+| 4 | `card_activity_spikes` | (table dropped) | drop_table | Stalled computed from `issues.updated_at` per P6 §F | `fizzy-ml5` (F.3 drop) |
+| 5 | `assignments` | `card_id` | uuid → varchar(255) | Multi-assign sidecar; primary mirrored to beads `assignee` per P7 §A.2 | `fizzy-h6i` (F.8) |
+| 6 | `taggings` | `card_id` | uuid → varchar(255) | Fizzy-side join for Filter/Search per P9 §B.2 (kept, not dropped) | `fizzy-k48` (F.6, repurposed v2) |
+| 7 | `comments` | `card_id` only (NOT id) | uuid → varchar(255) | Comments mirrored from beads `comments` per P9 §C.2; id-mirroring is S6 spec round | `fizzy-0b8` (F.9) |
+| 8 | `steps` | `card_id` | uuid → varchar(255) | Fizzy-only (Q-S-020 deferred decision; widen for now) | `fizzy-daf` (F.10) |
+| 9 | `pins` | `card_id` | uuid → varchar(255) | Fizzy-only | `fizzy-4wm` (F.11) |
+| 10 | `watches` | `card_id` | uuid → varchar(255) | Fizzy-only | `fizzy-it5` (F.12) |
+| 11 | `notifications` | `card_id` | uuid → varchar(255) | Fizzy-only | `fizzy-2ae` (F.13) |
+| 12 | `cards` | `id` (PK) | uuid → varchar(255) | Card mirror id = beads issue id | `fizzy-05q` (F.20) |
+| 13 | `cards` | (NEW) `beads_status` | (add) varchar(32) | mirror beads `issues.status` per P9 §A.2 | `fizzy-m6r` (F.1) |
 
 ### B.2 Polymorphic-FK tables (special handling)
 
@@ -77,7 +78,8 @@ These tables use polymorphic associations where `record_id` (or similar) carries
 | 18 | `notifications` | `source_id` | `source_type` | uuid → varchar(255) | Notifications Fizzy-only (P1 §C.6) | TBD |
 | 19 | `action_text_rich_texts` | `record_id` | `record_type` | uuid → varchar(255) | Card.description rich text (Q-S-012) | TBD |
 | 20 | `active_storage_attachments` | `record_id` | `record_type` | uuid → varchar(255) | Card.image (Q-S-025 covers attachments more deeply in S7) | TBD |
-| 21 | `search_records_*` (16 shards) | `searchable_id` | `searchable_type` | uuid → varchar(255) | Card + Comment indexed (P9 §C) | TBD (one bead for the migration covering all 16 shards) |
+| 21 | `search_records_*` (16 shards) | `searchable_id` AND `card_id` | `searchable_type` | uuid → varchar(255) for BOTH | Card + Comment indexed (P9 §C) | `fizzy-n9l` (F.19, v2 fixed) |
+| 22 | `storage_entries` | `recordable_id` | `recordable_type` | uuid → varchar(255) | Storage audit polymorphic to Card per P1 §A.9 (Gemini S1 catch) | `fizzy-0ic` (F.18b, added v2) |
 
 ### B.3 Tables NOT affected
 
@@ -85,21 +87,20 @@ These tables use polymorphic associations where `record_id` (or similar) carries
 - Solid Queue tables — infrastructure, not affected
 - Filter join tables (`assignees_filters`, etc.) — they join Filter to other models, not to Card
 
-### B.4 "Drop in fork" candidates
+### B.4 "Drop in fork" candidates (v2 — corrected per Codex S1 review)
 
-Some tables are flagged in P-rounds as Fizzy-only or drop-in-fork. They still need the FK type change IF they survive V1; otherwise the migration drops them. Decisions:
+Some tables are flagged in P-rounds as Fizzy-only or drop-in-fork. v1 of this doc proposed dropping closures + taggings; Codex's S1 review caught that P9 explicitly relies on both as Fizzy-side mirrors. v2 corrected:
 
-- `card_goldnesses` → P4 §G says drop goldness; render as derived from `priority=0`. Bead: drop the table outright (no FK widening needed; just `drop_table`).
-- `card_activity_spikes` → P6 §F says drop the persisted ActivitySpike row; compute from Beads timestamps. Bead: drop the table.
-- `steps` → Q-S-020 (P1 §E.7) deferred decision. For V1 simplicity: KEEP table (FK widen) but UI hides; spec round S6 confirms.
-- `card_not_nows` → P6 §C says NotNow becomes Beads `status='deferred'`; the Fizzy `card_not_nows` row could be dropped entirely. But for P6 §B's "closer attribution" concern (audit trail), we keep `card_not_nows` as a sidecar IF we want to preserve postpone-by-user audit; otherwise drop. Decision: drop in V1 per simplest path (audit available via Beads `events.actor`). Bead: drop the table.
-- `closures` → P6 §B says no closures cache (read close attribution from Beads events). Decision: drop in V1. Bead: drop the table.
+- `card_goldnesses` → **DROP** per P4 §G (goldness rendered from `priority=0`).
+- `card_activity_spikes` → **DROP** per P6 §F (stalled computed from `issues.updated_at`).
+- `card_not_nows` → **DROP** per P6 §C (postpone is Beads `status='deferred'`; audit via Beads `events.actor`).
+- `closures` → **KEEP + WIDEN** per P9 §C.2 (poller writes `Closure.upsert_all` on Beads close events; closer attribution mirrored from `events.actor`). Earlier P6 §B suggested dropping; P9 doctrine supersedes for V1.
+- `taggings` → **KEEP + WIDEN** per P9 §B.2 (Filter/Search use Fizzy-side `taggings` joins because cross-DB joins are impossible; Beads labels remain canonical, mirrored into taggings by the poller). Earlier P7 §B.2 suggested dropping; P9 doctrine supersedes for V1.
+- `steps` → **KEEP + WIDEN** for V1 (Q-S-020 deferred decision; UI may hide).
 
-The dropped tables become "drop_table" migrations rather than column-widening migrations. Cleaner schema.
+### B.5 `taggings` decision (v2 corrected)
 
-### B.5 `taggings` decision
-
-P7 §B.2 says "drop `Tagging` for V1; Beads `labels` is the source of truth". Decision: drop `taggings` in this migration. Tag (the model + table) survives for normalization + display metadata.
+v2: KEEP + WIDEN per §B.4. P7 §B.2 originally said "drop taggings"; P9 §B.2 came later and explicitly relies on it for Filter/Search Fizzy-side joins. Where docs conflict, P9 wins because it's the more recent + Codex-confirmed correctness call.
 
 ---
 
