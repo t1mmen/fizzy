@@ -43,8 +43,8 @@ module Account::Storage
       Storage::Entry.where(account_id: id).delete_all
     end
 
-    def calculate_bytes_used
-      boards.sum { |board| board.send(:calculate_bytes_used) }
+    def calculate_real_storage_bytes
+      boards.sum { |board| board.send(:calculate_real_storage_bytes) }
     end
 
     def config_value(key, default)

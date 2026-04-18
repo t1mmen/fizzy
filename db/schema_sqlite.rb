@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_230000) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -90,7 +90,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
     t.text "body", limit: 4294967295
     t.datetime "created_at", null: false
     t.string "name", limit: 255, null: false
-    t.uuid "record_id", null: false
+    t.string "record_id", limit: 255, null: false
     t.string "record_type", limit: 255, null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_action_text_rich_texts_on_account_id"
@@ -102,7 +102,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
     t.uuid "blob_id", null: false
     t.datetime "created_at", null: false
     t.string "name", limit: 255, null: false
-    t.uuid "record_id", null: false
+    t.string "record_id", limit: 255, null: false
     t.string "record_type", limit: 255, null: false
     t.index ["account_id"], name: "index_active_storage_attachments_on_account_id"
     t.index ["blob_id"], name: "index_active_storage_attachments_on_blob_id"
@@ -149,7 +149,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
     t.uuid "account_id", null: false
     t.uuid "assignee_id", null: false
     t.uuid "assigner_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_assignments_on_account_id"
@@ -253,7 +253,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
 
   create_table "closures", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id"
@@ -281,7 +281,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
 
   create_table "comments", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.uuid "creator_id", null: false
     t.datetime "updated_at", null: false
@@ -393,7 +393,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
     t.datetime "created_at", null: false
     t.uuid "mentionee_id", null: false
     t.uuid "mentioner_id", null: false
-    t.uuid "source_id", null: false
+    t.string "source_id", limit: 255, null: false
     t.string "source_type", limit: 255, null: false
     t.datetime "updated_at", null: false
     t.index ["account_id"], name: "index_mentions_on_account_id"
@@ -418,11 +418,11 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
 
   create_table "notifications", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.uuid "creator_id"
     t.datetime "read_at"
-    t.uuid "source_id", null: false
+    t.string "source_id", limit: 255, null: false
     t.string "source_type", limit: 255, null: false
     t.integer "unread_count", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -437,7 +437,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
 
   create_table "pins", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
@@ -509,7 +509,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
 
   create_table "steps", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.boolean "completed", default: false, null: false
     t.text "content", limit: 65535, null: false
     t.datetime "created_at", null: false
@@ -526,7 +526,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
     t.datetime "created_at", null: false
     t.bigint "delta", null: false
     t.string "operation", limit: 255, null: false
-    t.uuid "recordable_id"
+    t.string "recordable_id", limit: 255
     t.string "recordable_type", limit: 255
     t.string "request_id", limit: 255
     t.uuid "user_id"
@@ -550,7 +550,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
 
   create_table "taggings", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.uuid "tag_id", null: false
     t.datetime "updated_at", null: false
@@ -595,7 +595,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_225000) do
 
   create_table "watches", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
-    t.uuid "card_id", null: false
+    t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.uuid "user_id", null: false
