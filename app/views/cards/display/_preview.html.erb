@@ -28,7 +28,7 @@
 
       <% if card.triaged? %>
         <span class="btn justify-start card__column-name card__column-name--current txt-uppercase min-width max-width">
-          <span class="overflow-ellipsis "><%= card.column.name %></span>
+          <span class="overflow-ellipsis "><%= card.projected_column&.name %></span>
         </span>
       <% end %>
     </header>

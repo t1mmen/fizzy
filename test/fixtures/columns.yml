@@ -11,6 +11,7 @@ writebook_in_progress:
   id: <%= ActiveRecord::FixtureSet.identify("writebook_in_progress", :uuid) %>
   name: In progress
   color: "var(--color-card-2)"
+  beads_status: in_progress
   board: writebook_uuid
   position: 1
   account: 37s_uuid

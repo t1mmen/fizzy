@@ -24,11 +24,13 @@ class Card::TriageableTest < ActiveSupport::TestCase
     assert_nil card.column
     assert card.awaiting_triage?
 
-    assert_difference -> { card.reload.events.where(action: "card_triaged").count }, +1 do
-      card.triage_into(column)
-    end
+    client = mock("beads_client")
+    client.expects(:update_status).with(card.id, "in_progress")
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
-    assert_equal column, card.reload.column
+    card.triage_into(column)
+
+    assert_equal "in_progress", card.reload.beads_status
     assert card.triaged?
   end
 
@@ -49,9 +51,11 @@ class Card::TriageableTest < ActiveSupport::TestCase
     card = cards(:logo)
     assert card.triaged?
 
-    assert_difference -> { card.reload.events.where(action: "card_sent_back_to_triage").count }, +1 do
-      card.send_back_to_triage
-    end
+    client = mock("beads_client")
+    client.expects(:update_status).with(card.id, "open")
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+
+    card.send_back_to_triage
 
     assert card.reload.awaiting_triage?
   end

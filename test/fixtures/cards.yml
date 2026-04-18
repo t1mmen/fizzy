@@ -8,6 +8,7 @@ logo:
   due_on: <%= 3.days.from_now %>
   created_at: <%= 1.week.ago %>
   status: published
+  beads_status: in_progress
   last_active_at: <%= 1.week.ago %>
   account: 37s_uuid
 
@@ -32,6 +33,7 @@ text:
   title: The text is too small
   created_at: <%= 1.week.ago %>
   status: published
+  beads_status: in_progress
   last_active_at: <%= 1.week.ago %>
   account: 37s_uuid
 
@@ -55,6 +57,7 @@ buy_domain:
   title: Buy domain
   created_at: <%= 1.week.ago %>
   status: published
+  beads_status: open
   last_active_at: <%= 1.week.ago %>
   account: 37s_uuid
 

@@ -4,16 +4,19 @@ module Card::Triageable
   included do
     belongs_to :column, optional: true, touch: true
 
-    scope :awaiting_triage, -> { active.where.missing(:column) }
-    scope :triaged, -> { active.joins(:column) }
+    # Post-S4: column placement is status-driven (S2). "Awaiting triage"
+    # is the open/Todo status (nil treated as open for transitional AR-created
+    # cards that don't come from Beads yet).
+    scope :awaiting_triage, -> { active.where(beads_status: [ nil, "open" ]) }
+    scope :triaged, -> { active.where.not(beads_status: [ nil, "open" ]) }
   end
 
   def triaged?
-    active? && column.present?
+    active? && !awaiting_triage?
   end
 
   def awaiting_triage?
-    active? && !triaged?
+    active? && beads_status.to_s.in?([ "", "open" ])
   end
 
   def triage_into(column)
@@ -21,16 +24,28 @@ module Card::Triageable
 
     transaction do
       resume
-      update! column: column
-      track_event "triaged", particulars: { column: column.name }
+      raise ArgumentError, "Column is missing beads_status" if column.beads_status.blank?
+
+      Fizzy::Beads::CommandClient.current.update_status(id, column.beads_status)
+      update_columns(beads_status: column.beads_status.to_s, updated_at: Time.current)
     end
   end
 
   def send_back_to_triage(skip_event: false)
     transaction do
       resume
-      update! column: nil
-      track_event "sent_back_to_triage" unless skip_event
+      Fizzy::Beads::CommandClient.current.update_status(id, "open")
+      update_columns(beads_status: "open", updated_at: Time.current)
     end
+  end
+
+  # Transitional column projection: until S2 column routing fully lands,
+  # treat the column implied by beads_status as the display column.
+  def projected_column
+    return nil if awaiting_triage?
+    return nil if beads_status.blank?
+    return nil if beads_status.to_s == "closed"
+
+    board.columns.detect { |c| c.beads_status.to_s == beads_status.to_s }
   end
 end
