@@ -53,6 +53,53 @@ module Fizzy
       end
 
       # ------------------------------------------------------------------
+      # S4 F.1 — lifecycle methods (per S4 §A + §B.1)
+      # NOTE: Ruby cannot accept a keyword named `until:` directly (reserved),
+      # but callers may still pass `until:`; we accept it via **kwargs.
+      # ------------------------------------------------------------------
+
+      def update_status(id, status)
+        invoke!([ "update", id.to_s, "--status", status.to_s ])
+      end
+
+      def close_issue(id, reason: nil)
+        argv = [ "close", id.to_s ]
+        argv.concat([ "--reason", reason.to_s ]) if reason.present?
+        invoke!(argv)
+      end
+
+      def reopen_issue(id, reason: nil, restore_status: nil)
+        argv = [ "reopen", id.to_s ]
+        argv.concat([ "--reason", reason.to_s ]) if reason.present?
+        invoke!(argv)
+
+        update_status(id, restore_status) if restore_status.present?
+      end
+
+      def defer_issue(id, until_time: nil, **kwargs)
+        until_time ||= kwargs[:until]
+        argv = [ "defer", id.to_s ]
+        argv << "--until=#{until_time}" if until_time.present?
+        invoke!(argv)
+      end
+
+      def undefer_issue(id, restore_status: nil)
+        invoke!([ "undefer", id.to_s ])
+        update_status(id, restore_status) if restore_status.present?
+      end
+
+      def update_defer_until(id, until_time: nil, **kwargs)
+        until_time ||= kwargs[:until]
+        raise ArgumentError, "until_time is required" if until_time.blank?
+
+        invoke!([ "update", id.to_s, "--defer", until_time.to_s ])
+      end
+
+      def read_issue(id)
+        JSON.parse(invoke!([ "--json", "show", id.to_s ]).to_s)
+      end
+
+      # ------------------------------------------------------------------
       # S5 F.3 — label methods (per S5 §A.2 + §C.1)
       # Reject reserved fizzy/ namespace; system code paths use the private
       # _add_system_label / _remove_system_label methods (S5 F.5 / fizzy-75i).
@@ -156,4 +203,3 @@ module Fizzy
     end
   end
 end
-

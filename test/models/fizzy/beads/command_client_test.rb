@@ -1,6 +1,10 @@
 require "test_helper"
 
 class Fizzy::Beads::CommandClientTest < ActiveSupport::TestCase
+  def ok_status
+    Struct.new(:success?, :exitstatus).new(true, 0)
+  end
+
   test ".for(nil) raises MissingActorError" do
     assert_raises(Fizzy::Beads::CommandClient::MissingActorError) do
       Fizzy::Beads::CommandClient.for(nil)
@@ -37,10 +41,54 @@ class Fizzy::Beads::CommandClientTest < ActiveSupport::TestCase
   test "invoke! returns stdout on success" do
     client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
 
-    status = Struct.new(:success?, :exitstatus).new(true, 0)
+    status = ok_status
 
     Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "show", "fizzy-abc").returns(["ok", "", status])
 
     assert_equal "ok", client.send(:invoke!, ["show", "fizzy-abc"])
+  end
+
+  test "update_status calls bd update --status" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "update", "fizzy-abc", "--status", "blocked").returns(["", "", ok_status])
+
+    client.update_status("fizzy-abc", "blocked")
+  end
+
+  test "close_issue calls bd close and supports --reason" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "close", "fizzy-abc", "--reason", "done").returns(["", "", ok_status])
+
+    client.close_issue("fizzy-abc", reason: "done")
+  end
+
+  test "reopen_issue optionally restores status via a second update" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+
+    sequence = sequence("bd")
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "reopen", "fizzy-abc").in_sequence(sequence).returns(["", "", ok_status])
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "update", "fizzy-abc", "--status", "in_progress").in_sequence(sequence).returns(["", "", ok_status])
+
+    client.reopen_issue("fizzy-abc", restore_status: "in_progress")
+  end
+
+  test "defer_issue supports until_time and until keyword" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "defer", "fizzy-abc", "--until=tomorrow").returns(["", "", ok_status])
+    client.defer_issue("fizzy-abc", until_time: "tomorrow")
+
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "defer", "fizzy-abc", "--until=next monday").returns(["", "", ok_status])
+    client.defer_issue("fizzy-abc", until: "next monday")
+  end
+
+  test "read_issue uses --json show and parses JSON" do
+    client = Fizzy::Beads::CommandClient.for("x@y.com", bd_bin: "bd")
+
+    Open3.expects(:capture3).with("bd", "--actor", "x@y.com", "--json", "show", "fizzy-abc").returns([ "{\"id\":\"fizzy-abc\"}", "", ok_status ])
+
+    assert_equal({ "id" => "fizzy-abc" }, client.read_issue("fizzy-abc"))
   end
 end
