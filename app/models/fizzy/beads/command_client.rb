@@ -1,4 +1,6 @@
 require "open3"
+require "json"
+require "tempfile"
 require "fizzy/beads/label_normalizer"
 require "fizzy/beads/reserved_namespace"
 
@@ -103,7 +105,43 @@ module Fizzy
         invoke!([ "update", id.to_s, "--remove-label", normalized ])
       end
 
+      # ------------------------------------------------------------------
+      # S6 F.2 — add_comment (per S6 §C.1 + §C.2)
+      # Uses --file to avoid quoting/escaping pitfalls; --author = @actor
+      # so poller deterministic mapping works (S6 §C.3); --json so we get
+      # the created comment id+created_at back.
+      # Returns parsed Hash with at minimum "id" and "created_at" keys.
+      # ------------------------------------------------------------------
+
+      def add_comment(issue_id, plaintext)
+        with_tempfile(plaintext) do |path|
+          stdout = invoke!([ "comments", "add", issue_id.to_s, "--file", path, "--author", @actor, "--json" ])
+          JSON.parse(stdout.to_s.strip)
+        end
+      end
+
+      # ------------------------------------------------------------------
+      # S6 F.3 — update_description (per S6 §C.1 + §G)
+      # Uses --body-file (preferred for multi-line plaintext per S10 §D.1
+      # write protocol). For short single-line strings the caller could use
+      # --description directly; we prefer the file form universally.
+      # ------------------------------------------------------------------
+
+      def update_description(issue_id, plaintext)
+        with_tempfile(plaintext) do |path|
+          invoke!([ "update", issue_id.to_s, "--body-file", path ])
+        end
+      end
+
       private
+
+      def with_tempfile(content)
+        Tempfile.create([ "fizzy_beads_", ".txt" ]) do |f|
+          f.write(content.to_s)
+          f.flush
+          yield f.path
+        end
+      end
 
       def invoke!(argv)
         full_argv = [@bd_bin, "--actor", @actor, *argv]
