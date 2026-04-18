@@ -11,7 +11,11 @@ class Cards::CommentsController < ApplicationController
   end
 
   def create
-    @comment = @card.comments.create!(comment_params)
+    plaintext = Fizzy::Beads::ActionTextToPlaintext.call(comment_params[:body])
+    json = Fizzy::Beads::CommandClient.current.add_comment(@card.id, plaintext)
+    
+    # Per S6 §E.2: Optimistic mirror write for immediate response
+    @comment = Beads::Mirror::CommentMirror.call(json, account_id: @card.account_id)
 
     respond_to do |format|
       format.turbo_stream
@@ -23,24 +27,15 @@ class Cards::CommentsController < ApplicationController
   end
 
   def edit
+    head :method_not_allowed
   end
 
   def update
-    @comment.update! comment_params
-
-    respond_to do |format|
-      format.turbo_stream
-      format.json { head :no_content }
-    end
+    head :method_not_allowed
   end
 
   def destroy
-    @comment.destroy
-
-    respond_to do |format|
-      format.turbo_stream
-      format.json { head :no_content }
-    end
+    head :method_not_allowed
   end
 
   private
