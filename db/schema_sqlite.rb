@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_205600) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_215000) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -157,6 +157,14 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_205600) do
     t.index ["card_id"], name: "index_assignments_on_card_id"
   end
 
+  create_table "beads_mirror_cursors", primary_key: "source", id: { type: :string, limit: 255 }, force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.datetime "last_advanced_at"
+    t.datetime "last_seen_at"
+    t.text "processed_ids", limit: 65535
+    t.datetime "updated_at", null: false
+  end
+
   create_table "board_publications", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
     t.uuid "board_id", null: false
@@ -260,7 +268,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_205600) do
     t.uuid "board_id", null: false
     t.string "color", limit: 255, null: false
     t.datetime "created_at", null: false
-    t.string "match_label"
+    t.string "match_label", limit: 255
     t.string "name", limit: 255, null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
@@ -302,7 +310,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_205600) do
   create_table "events", id: :uuid, force: :cascade do |t|
     t.uuid "account_id", null: false
     t.string "action", limit: 255, null: false
-    t.string "beads_event_id"
+    t.string "beads_event_id", limit: 255
     t.uuid "board_id", null: false
     t.datetime "created_at", null: false
     t.uuid "creator_id", null: false
