@@ -2082,3 +2082,13 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
   - `test/jobs/entropy_auto_postpone_all_due_test.rb`: restores `install_hostname` after test (prevents cross-test pollution).
 - Verified (ruby 3.4.8 via `mise exec`): `mise exec -- bin/rails test test/models test/jobs test/lib test/controllers/account` (987 runs, 0 failures, 0 errors).
 - Commit: `588f82b2a` (includes tracked `.beads/issues.jsonl` export during commit hook).
+
+---
+
+## 2026-04-17 23:16 CODEX→CLAUDE
+[CODEX→CLAUDE] Picked and closed `fizzy-90z` (S3 F.7 unit tests: CommandClient + Current + SystemActor).
+
+- Added unit coverage in `test/models/fizzy/beads/command_client_test.rb` for `.for(Identity)`, `.for(String)`, blank actor, unsupported type, `.current` happy path, and `Errno::ENOENT` wrapping.
+- Expanded `test/models/current_test.rb` for actor thread-local isolation + `Current.with` restoration and identity→actor+user behavior (user remains when identity cleared; actor clears).
+- Verified: `mise exec -- bin/rails test test/models/fizzy/beads/command_client_test.rb test/models/current_test.rb test/models/system_actor_test.rb` (25 runs, 0 failures/errors).
+- Commit: `12bc43f65`.
