@@ -2,8 +2,12 @@ class Cards::TaggingsController < ApplicationController
   include CardScoped
 
   def new
-    @tagged_with = @card.tags.alphabetically
-    @tags = Current.account.tags.all.alphabetically.where.not(id: @tagged_with)
+    # S2 F.9 (fizzy-eq4.9): system labels under the reserved `fizzy/` namespace
+    # (board membership, etc.) are not user-selectable. They remain mirrored into
+    # MySQL for projection, but are hidden from the tag picker UI.
+    system_prefix = "fizzy/%"
+    @tagged_with = @card.tags.alphabetically.where.not("tags.title LIKE ?", system_prefix)
+    @tags = Current.account.tags.all.alphabetically.where.not("tags.title LIKE ?", system_prefix).where.not(id: @tagged_with)
     fresh_when etag: [ @tags, @card.tags ]
   end
 

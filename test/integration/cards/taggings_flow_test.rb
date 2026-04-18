@@ -14,6 +14,10 @@ class Cards::TaggingsFlowTest < ActionDispatch::IntegrationTest
     @board = boards(:writebook)
     @card_id = "fizzy-4az-#{SecureRandom.hex(4)}"
     @beads_card = @board.cards.create!(id: @card_id, title: "Beads card", creator: users(:david))
+
+    # S2: make the Beads-id card accessible via label-based board membership.
+    tag = Tag.find_or_create_by!(account: @board.account, title: @board.membership_label)
+    Tagging.find_or_create_by!(account: @board.account, card: @beads_card, tag: tag)
   end
 
   teardown do

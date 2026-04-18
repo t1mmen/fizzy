@@ -8,6 +8,7 @@ class Cards::TaggingsControllerTest < ActionDispatch::IntegrationTest
   test "new" do
     get new_card_tagging_path(cards(:logo))
     assert_response :success
+    assert_no_match(%r{#fizzy/}, response.body)
   end
 
   # ----- Legacy uuid-id Card path: direct AR mutation, no CommandClient -----
@@ -87,6 +88,13 @@ class Cards::TaggingsControllerTest < ActionDispatch::IntegrationTest
         id: "fizzy-tag-#{SecureRandom.hex(4)}",
         title: "Beads card for tagging",
         creator: users(:kevin)
-      )
+      ).tap do |card|
+        # S2: board membership is label-based; make the Beads-id card accessible
+        # via User#accessible_cards in controller tests by simulating the poller-
+        # mirrored membership label tagging.
+        board = boards(:writebook)
+        tag = Tag.find_or_create_by!(account: board.account, title: board.membership_label)
+        Tagging.find_or_create_by!(account: board.account, card: card, tag: tag)
+      end
     end
 end

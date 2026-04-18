@@ -17,6 +17,9 @@ class Cards::AssignmentsFlowTest < ActionDispatch::IntegrationTest
     # Unique-per-test id avoids cross-test collisions under use_transactional_tests = false.
     @card_id = "fizzy-jig-#{SecureRandom.hex(4)}"
     @beads_card = @board.cards.create!(id: @card_id, title: "Beads card", creator: users(:david))
+    # S2: make the Beads-id card accessible via label-based board membership.
+    tag = Tag.find_or_create_by!(account: @board.account, title: @board.membership_label)
+    Tagging.find_or_create_by!(account: @board.account, card: @beads_card, tag: tag)
     @user_a = users(:david)
     @user_b = users(:kevin)
   end
