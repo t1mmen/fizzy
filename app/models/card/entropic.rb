@@ -25,8 +25,16 @@ module Card::Entropic
 
   class_methods do
     def auto_postpone_all_due
-      due_to_be_postponed.find_each do |card|
-        card.auto_postpone(user: card.account.system_user)
+      Current.with(actor: SystemActor.email) do
+        due_to_be_postponed.find_each do |card|
+          until_time = Time.current + card.auto_postpone_period.to_i
+          Fizzy::Beads::CommandClient.current.defer_issue(card.id, until: until_time.iso8601)
+
+          # Mirror the defer_until locally so UI can reflect "Not now" before
+          # the poller sweep lands (S4 §C.3 mirror columns).
+          card.update_columns(defer_until: until_time, updated_at: Time.current)
+          card.activity_spike&.destroy
+        end
       end
     end
   end

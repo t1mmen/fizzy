@@ -38,25 +38,32 @@ class Card::EntropicTest < ActiveSupport::TestCase
     cards(:logo).update!(last_active_at: 1.day.ago - entropies("37s_account").auto_postpone_period)
     cards(:shipping).update!(last_active_at: 1.day.from_now - entropies("37s_account").auto_postpone_period)
 
-    assert_difference -> { Card.postponed.count }, +1 do
+    client = mock("beads_client")
+    client.stubs(:defer_issue)
+    client.expects(:defer_issue).with(cards(:logo).id, until: kind_of(String)).once
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+
+    assert_nothing_raised do
       Card.auto_postpone_all_due
     end
 
-    assert cards(:logo).reload.postponed?
-    assert_equal accounts("37s").system_user, cards(:logo).postponed_by
-    assert_not cards(:shipping).reload.postponed?
+    assert_not_nil cards(:logo).reload.defer_until
+    assert_nil cards(:shipping).reload.defer_until
   end
 
   test "auto postpone all due using entropy defined at the board level" do
     cards(:logo).update!(last_active_at: 1.day.ago - entropies(:writebook_board).auto_postpone_period)
     cards(:shipping).update!(last_active_at: 1.day.from_now - entropies(:writebook_board).auto_postpone_period)
 
-    assert_difference -> { Card.postponed.count }, +1 do
-      Card.auto_postpone_all_due
-    end
+    client = mock("beads_client")
+    client.stubs(:defer_issue)
+    client.expects(:defer_issue).with(cards(:logo).id, until: kind_of(String)).once
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
-    assert cards(:logo).reload.postponed?
-    assert_not cards(:shipping).reload.postponed?
+    Card.auto_postpone_all_due
+
+    assert_not_nil cards(:logo).reload.defer_until
+    assert_nil cards(:shipping).reload.defer_until
   end
 
   test "postponing soon scope" do

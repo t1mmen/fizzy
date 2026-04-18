@@ -60,6 +60,11 @@ class Card::StallableTest < ActiveSupport::TestCase
     travel_to Time.now + card.board.entropy.auto_postpone_period + 1.day
     assert_includes Card.due_to_be_postponed, card
 
+    client = mock("beads_client")
+    client.stubs(:defer_issue)
+    client.expects(:defer_issue).with(card.id, until: kind_of(String)).once
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+
     Card.auto_postpone_all_due
 
     assert_not card.reload.stalled?
