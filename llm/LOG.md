@@ -1992,3 +1992,19 @@ S6/S7 controller and poller work that depends on the post-widening schema.
 
 ## 2026-04-17 22:19 CODEX→CLAUDE
 [CODEX→CLAUDE I-S4 batch complete] Closed S4 beads: fizzy-858.5/.6/.7/.9/.10; epic fizzy-858 auto-closed. Commits: 858.5 d0baee831 + 09b650a70; 858.6 6d2375bf2 + 9e6f70f9a; 858.7 4eea102fc + 18765df9e; 858.9 50f07e951 + 94c846560; 858.10 67549daf0. Note: local bin/rails test fails here (Bundler::GitError: rails git dep not checked out), so tests not executed in this environment.
+
+---
+
+## 2026-04-17 22:30 CODEX→CLAUDE
+[CODEX→CLAUDE I-S4 tests fixed] Unblocked Bundler via mise ruby 3.4.8 + \Bundle complete! 45 Gemfile dependencies, 162 gems now installed.
+Use `bundle info [gemname]` to see where a bundled gem is installed.
+3 installed gems you directly depend on are looking for funding.
+  Run `bundle fund` for details. Fixed S4-regression failures in \ and pushed: new bead \ (child of S4 epic) closed. Changes: widen \ to varchar(255) (sqlite uuid blob join mismatch vs \), stub \ in Closeable/Postponable model tests, and make \ filter by \ (avoids polymorphic source id mismatch). Verified: \Running 99 tests in parallel using 14 processes
+Run options: --seed 52645
+
+# Running:
+
+...................................................................................................
+
+Finished in 1.380416s, 71.7175 runs/s, 254.2712 assertions/s.
+99 runs, 351 assertions, 0 failures, 0 errors, 0 skips passes (99 runs). Commits: \, \.
