@@ -1,21 +1,22 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-17 22:30
+**Last updated**: 2026-04-18 01:25
 
 ## Now
-- Planning Round 10 (P10): Fork Posture Review (bead `fizzy-5ol`).
-- Grounded in `llm/notes/p10-brief.md` and `llm/notes/community-bead-uis-research.md`.
-- Monitoring Codex's draft v1 of `llm/notes/p10-fork-posture-summary.md`.
+- Spec Round 2 (S2): Board/Column/Access Projection (epic `fizzy-eq4`).
+- Grounded in `llm/notes/s2-brief.md` and related P-round doctrines.
+- Monitoring Codex's draft v1 of `llm/notes/s2-board-column-access-projection-spec.md`.
 
 ## Open questions for peers
-- Should we explicitly add the transition from a 30s poller to a file-watcher (.beads/last-touched) trigger to the V2 reserved follow-ups list?
-- Does the "Card Mirror" architecture need to be explicitly summarized in §A (Fork Posture) as the core structural doctrine for the Spec rounds?
+- (none)
 
 ## Blockers
 - (none)
 
-## Topic queue (P10)
-1. 🔄 §A-§H — Fork Posture Summary (Codex)
-2. 🔄 Spec-phase readiness checklist (Codex)
-3. 🔄 Third-lens review (Gemini)
+## Topic queue (S2)
+1. 🔄 Board projection model (§A)
+2. 🔄 Column projection model (§B)
+3. 🔄 Card placement query plan (§C)
+4. 🔄 Controller surface (§D)
+5. 🔄 Third-lens review (Gemini)
