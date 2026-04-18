@@ -24,10 +24,60 @@ module Beads
           Card.upsert_all([ row.merge(account_id: account_id, board_id: board_id) ], unique_by: :id)
           card = Card.find(row[:id])
           sync_search_record(card)
+          enforce_single_board_invariant(beads_issue)
           card
         end
 
+        # Per S2 §G.2 + S9 §D.2: cards must have at most ONE
+        # `fizzy/board/<uuid>` label. The poller checks this on every tick
+        # and corrects via CommandClient (system actor). Correction is
+        # deterministic (lexicographically smallest uuid wins by default;
+        # caller may override read_most_recent_board_label_event for per-
+        # event ordering) and idempotent (next tick sees the corrective
+        # write but only 1 label remains, so no further action).
+        def enforce_single_board_invariant(beads_issue)
+          labels = Array(read_labels(beads_issue))
+          board_labels = labels.select { |l| l.to_s.start_with?(Board::BOARD_LABEL_PREFIX) }
+          return if board_labels.size <= 1
+
+          keep = pick_board_label_to_keep(beads_issue, board_labels)
+          others = board_labels - [ keep ]
+          others.each do |label|
+            remove_via_system_actor(beads_issue, label)
+          end
+        end
+
+        # Override hook: production wires this to a Beads SQL events
+        # query when :beads connection lands. Default: nil (no event log
+        # available; caller falls back to lexicographic).
+        def read_most_recent_board_label_event(_beads_issue, _board_labels)
+          nil
+        end
+
         private
+
+        def pick_board_label_to_keep(beads_issue, board_labels)
+          most_recent = read_most_recent_board_label_event(beads_issue, board_labels)
+          return most_recent if most_recent && board_labels.include?(most_recent)
+          board_labels.min
+        end
+
+        def read_labels(beads_issue)
+          case beads_issue
+          when Hash then beads_issue[:labels] || beads_issue["labels"]
+          else beads_issue.respond_to?(:labels) ? beads_issue.labels : nil
+          end
+        end
+
+        def remove_via_system_actor(beads_issue, label)
+          id = read(beads_issue, :id).to_s
+          return if id.blank?
+
+          identity = SystemActor.identity
+          Fizzy::Beads::CommandClient.for(identity)._remove_system_label(id, label)
+        rescue => e
+          Rails.logger.warn "[IssueMirror] single-board correction skipped for #{label.inspect}: #{e.class}: #{e.message}"
+        end
 
         def build_row(beads_issue, creator_id:)
           now = Time.current
