@@ -3,7 +3,7 @@ require "test_helper"
 # S9 F.7 (fizzy-pmi.7): event mirror procedure. Translates a Beads events
 # row through Fizzy::Beads::EventMapper and Event.create!s the resulting
 # payloads with idempotent dedup via events.beads_event_id.
-class Beads::Mirror::EventTest < ActiveSupport::TestCase
+class Beads::Mirror::EventMirrorTest < ActiveSupport::TestCase
   setup do
     Current.session = sessions(:david)
     Current.actor = "david@37signals.com"
@@ -37,7 +37,7 @@ class Beads::Mirror::EventTest < ActiveSupport::TestCase
     }
 
     assert_difference "Event.count", 1 do
-      Beads::Mirror::Event.call(beads_event)
+      Beads::Mirror::EventMirror.call(beads_event)
     end
 
     event = Event.find_by!(beads_event_id: "event:#{beads_event_id}")
@@ -58,10 +58,10 @@ class Beads::Mirror::EventTest < ActiveSupport::TestCase
       created_at: Time.current
     }
 
-    Beads::Mirror::Event.call(beads_event)
+    Beads::Mirror::EventMirror.call(beads_event)
 
     assert_no_difference "Event.count" do
-      assert_nothing_raised { Beads::Mirror::Event.call(beads_event) }
+      assert_nothing_raised { Beads::Mirror::EventMirror.call(beads_event) }
     end
   end
 
@@ -75,7 +75,7 @@ class Beads::Mirror::EventTest < ActiveSupport::TestCase
     }
 
     assert_no_difference "Event.count" do
-      result = Beads::Mirror::Event.call(beads_event)
+      result = Beads::Mirror::EventMirror.call(beads_event)
       assert_empty result
     end
   end
@@ -90,7 +90,7 @@ class Beads::Mirror::EventTest < ActiveSupport::TestCase
     }
 
     assert_enqueued_with(job: NotifyRecipientsJob) do
-      Beads::Mirror::Event.call(beads_event)
+      Beads::Mirror::EventMirror.call(beads_event)
     end
   end
 
@@ -104,7 +104,7 @@ class Beads::Mirror::EventTest < ActiveSupport::TestCase
     }
 
     assert_enqueued_with(job: Event::WebhookDispatchJob) do
-      Beads::Mirror::Event.call(beads_event)
+      Beads::Mirror::EventMirror.call(beads_event)
     end
   end
 
@@ -118,7 +118,7 @@ class Beads::Mirror::EventTest < ActiveSupport::TestCase
     }
 
     assert_no_difference "Event.count" do
-      result = Beads::Mirror::Event.call(beads_event)
+      result = Beads::Mirror::EventMirror.call(beads_event)
       assert_empty result.compact
     end
   end

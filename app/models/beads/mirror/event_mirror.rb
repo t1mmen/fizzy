@@ -11,7 +11,10 @@ module Beads
     #
     # touch_last_active_at stays silent because the caller wraps this in
     # Current.with(beads_mirror: true) (S8 §B.4 mirror-mode guard).
-    module Event
+    # Named EventMirror (rather than Event) to avoid shadowing the AR Event
+    # class within the Beads::Mirror namespace — sibling Beads::Mirror::CommentEvent
+    # references Event without explicit ::, so a sibling Event module would break it.
+    module EventMirror
       class << self
         def call(beads_event, account: Current.account, prior_snapshot: nil)
           payloads = Fizzy::Beads::EventMapper.call(beads_event, account: account, prior_snapshot: prior_snapshot)
@@ -21,10 +24,10 @@ module Beads
         private
 
         def create_event(payload)
-          card = ::Card.find_by(id: payload[:eventable_id])
+          card = Card.find_by(id: payload[:eventable_id])
           return nil unless card # orphaned event — nothing to mirror against
 
-          ::Event.create!(
+          Event.create!(
             action:         payload[:action],
             beads_event_id: payload[:beads_event_id],
             creator:        payload[:creator],
@@ -35,7 +38,7 @@ module Beads
             particulars:    payload[:particulars] || {}
           )
         rescue ActiveRecord::RecordNotUnique
-          ::Event.find_by(beads_event_id: payload[:beads_event_id])
+          Event.find_by(beads_event_id: payload[:beads_event_id])
         end
       end
     end
