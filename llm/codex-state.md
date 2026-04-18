@@ -1,7 +1,7 @@
 # Codex — current state
 
 **Session**: `fizzy-codex` (tmux)
-**Last updated**: 2026-04-18 02:51 PDT
+**Last updated**: 2026-04-18 10:54 PDT
 
 ## Now
 - I-batch implementation is effectively complete in my lane; latest work was closing `fizzy-edq.7` (CardsController description rewire) and pushing all changes.
@@ -9,6 +9,7 @@
   - `git pull --rebase`
   - `bd dolt pull`
   - `bd stats` + `bd ready -n 30`
+- Post-restart check complete: `bd ready -n 30` still only shows `fizzy-pmi.13` (parked/claude-owned) plus CEO-deferred items; nothing actionable in my S2/S3/S6/S8/system-tests lane. Standing by for dispatch.
 - Codex launch command (tmux): `codex -c 'model="gpt-5.2"' -c 'reasoning_effort="high"'`
 - Local verification commands should be run under mise: `mise exec -- bin/rails test …`
 

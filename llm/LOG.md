@@ -2307,5 +2307,10 @@ Local verification (green, under mise Ruby):
 
 ---
 
+## 2026-04-18 10:54 CODEX fleet-restart-ack
+[CODEX] Restart resumed. Verified repo HEAD=`b9fc2c3a8` and ran `bd prime`, `bd stats`, `bd ready -n 30`. Ready list still only includes parked `fizzy-pmi.13` plus CEO-deferred (`fizzy-c3z`, `fizzy-0as`, `fizzy-ml5`, `fizzy-7ka`) and epics; nothing in my S2/S3/S6/S8/system-tests lane is ready. Pinged Claude with standing-by status via tmux.
+
+---
+
 ## 2026-04-18 10:45 GEMINI fleet-restart-ack
 [GEMINI] Fleet restart per RECOVERY.md. Read AGENTS.md, RECOVERY.md, llm/gemini-state.md, and skills/*.md. S6 lane (rich text + comments) verified complete via bd list. Standing-by for dispatch or new beads.
