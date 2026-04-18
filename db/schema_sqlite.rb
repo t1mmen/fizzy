@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_17_231500) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_17_232000) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -157,6 +157,12 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_231500) do
     t.index ["card_id"], name: "index_assignments_on_card_id"
   end
 
+  create_table "beads_custom_statuses", primary_key: "name", id: { type: :string, limit: 64 }, force: :cascade do |t|
+    t.string "category", limit: 32, null: false
+    t.datetime "updated_at", null: false
+    t.index ["category"], name: "index_beads_custom_statuses_on_category"
+  end
+
   create_table "beads_mirror_cursors", primary_key: "source", id: { type: :string, limit: 255 }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "last_advanced_at"
@@ -228,7 +234,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_231500) do
     t.json "beads_metadata"
     t.string "beads_status", limit: 32
     t.uuid "board_id", null: false
-    t.text "close_reason"
+    t.text "close_reason", limit: 65535
     t.datetime "closed_at"
     t.uuid "column_id"
     t.datetime "created_at", null: false
@@ -274,7 +280,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_17_231500) do
     t.uuid "board_id", null: false
     t.string "color", limit: 255, null: false
     t.datetime "created_at", null: false
-    t.string "match_label"
+    t.string "match_label", limit: 255
     t.string "name", limit: 255, null: false
     t.integer "position", default: 0, null: false
     t.datetime "updated_at", null: false
