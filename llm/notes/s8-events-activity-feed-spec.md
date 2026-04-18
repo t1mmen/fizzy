@@ -320,7 +320,17 @@ Child beads are minted under epic `fizzy-n3l` and cover:
 - integration tests for notifications/webhooks/dedup
 - S9 dependencies for poller hook points
 
-(See epic children list after minting.)
+Beads (children of `fizzy-n3l`):
+- `fizzy-n3l.1` — S8 F.1 — Add events.beads_event_id + unique index (dedup key)
+- `fizzy-n3l.2` — S8 F.2 — Map Beads actor/author string → User (creator attribution)
+- `fizzy-n3l.3` — S8 F.3 — Implement Beads events→Fizzy Event mapper (card_* actions)
+- `fizzy-n3l.4` — S8 F.4 — Mirror Beads comments into comment_created Event rows
+- `fizzy-n3l.5` — S8 F.5 — Make Card#touch_last_active_at callback-safe for poller-created Events
+- `fizzy-n3l.6` — S8 F.6 — S9 poller hook: mirror Beads events/comments into Events + enqueue side effects
+- `fizzy-n3l.7` — S8 F.7 — Integration test: mirrored Events trigger outbound webhooks once
+- `fizzy-n3l.8` — S8 F.8 — Integration test: mirrored Events create Notifications + bundle window
+- `fizzy-n3l.9` — S8 F.9 — Unit+integration tests: Event dedup via beads_event_id
+- `fizzy-n3l.10` — S8 F.10 — Activities feed: ensure mirrored Events are visible (board scoping + preloads)
 
 ---
 
@@ -334,4 +344,3 @@ Child beads are minted under epic `fizzy-n3l` and cover:
 - [ ] §F notifications + mentions cross-linked and ordering constraints stated.
 - [ ] §G tests cover mapping + dedup + side effects.
 - [ ] Child beads (8–12) minted under `fizzy-n3l` with correct deps (S3/S4/S5/S6/S9).
-
