@@ -4,11 +4,12 @@ require "test_helper"
 # Current.actor + Current.beads_mirror per S9 §A.1, calls advance_all.
 class BeadsPollerTest < ActiveJob::TestCase
   setup do
+    @previous_install_hostname = Rails.application.config.x.fizzy.install_hostname
     Rails.application.config.x.fizzy.install_hostname = "test.fizzy.localhost"
   end
 
   teardown do
-    Rails.application.config.x.fizzy.install_hostname = nil
+    Rails.application.config.x.fizzy.install_hostname = @previous_install_hostname
   end
 
   test "perform sets Current.actor to SystemActor.email and Current.beads_mirror" do
@@ -37,11 +38,14 @@ class BeadsPollerTest < ActiveJob::TestCase
   end
 
   test "perform raises if SystemActor.email cannot be resolved" do
+    previous = Rails.application.config.x.fizzy.install_hostname
     Rails.application.config.x.fizzy.install_hostname = nil
 
     assert_raises(RuntimeError) do
       BeadsPoller.perform_now
     end
+  ensure
+    Rails.application.config.x.fizzy.install_hostname = previous
   end
 
   test "advance_all iterates all SOURCES and updates last_advanced_at via stub" do

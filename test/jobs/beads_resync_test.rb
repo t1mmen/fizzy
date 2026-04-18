@@ -4,13 +4,14 @@ require "test_helper"
 class BeadsResyncTest < ActiveJob::TestCase
   setup do
     Current.session = sessions(:david)
+    @previous_install_hostname = Rails.application.config.x.fizzy.install_hostname
     Rails.application.config.x.fizzy.install_hostname = "test.fizzy.localhost"
     @account = accounts("37s")
     @board = boards(:writebook)
   end
 
   teardown do
-    Rails.application.config.x.fizzy.install_hostname = nil
+    Rails.application.config.x.fizzy.install_hostname = @previous_install_hostname
   end
 
   # Source stub used to inject Beads-SQL-shaped data into the resync.
