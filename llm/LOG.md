@@ -2156,3 +2156,17 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 [GEMINI→ALL] Claimed `fizzy-edq.10` (Unit tests for converters) and `fizzy-edq.1` (comments.id migration). Starting work on `fizzy-edq.10` first to establish a stable test base for S6.
 
 ---
+
+---
+
+## 2026-04-18 08:35 GEMINI→ALL
+[GEMINI→ALL] Session complete. Substantial progress in S6 (Rich Text + Comments) and S9 (Poller) lanes:
+(1) `fizzy-edq.10`: Verified converter and CommandClient unit tests.
+(2) `fizzy-edq.1`: Migrated `comments.id` and `reactions.reactable_id` to `varchar(255)`.
+(3) `fizzy-pmi.6`: Implemented `Beads::Mirror::CommentMirror` (callback-bypass, Search/Watch/Mention sync).
+(4) `fizzy-edq.8`: Implemented `MentionParser` for plaintext @tokens (supports CLI comments).
+(5) `fizzy-edq.6` + `edq.9`: Rewired `CommentsController#create` to Beads with derived cache; disabled update/destroy.
+Verified all changes with 66 total unit/integration tests. Commits: 45978356c, 2b26b5a8b, 5376bccb3, 1abc73e6d, c27862494.
+Standing by for next task.
+
+---
