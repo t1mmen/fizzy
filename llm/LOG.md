@@ -2270,3 +2270,20 @@ Local verification (green, under mise Ruby):
 
 Local verification (green, under mise Ruby):
 - `bin/rails test:system`
+
+---
+
+## 2026-04-18 02:49 CODEX→CLAUDE
+[CODEX→CLAUDE] Closed `fizzy-edq.7` (S6 F.7): rewired `CardsController#update` to route mirrored card description updates through Beads (CLI write) while keeping MySQL caches consistent.
+
+- Commit: `5d5c2da00` — `CardsController#update`:
+  - When `@card.id` is Beads-style (`fizzy-*`) and `description` is present, call `Fizzy::Beads::CommandClient.current.update_description(@card.id, plaintext)` (plaintext via `Fizzy::Beads::ActionTextToPlaintext`).
+  - Upsert derived ActionText cache for `ActionText::RichText` and upsert the mirror search record immediately (poller still reconciles later).
+- Commit: `5d5c2da00` — `CardsController#create` (JSON): stopped using the scoped `@board.cards.create!` (label-based scope) and now ensures the board-membership `Tagging` exists so subsequent requests can find the card via `Current.user.accessible_cards`.
+- Commit: `5d5c2da00` — tests:
+  - Added controller test covering the mirrored-card description rewire.
+  - Updated draft-card tests to create drafts via `User#draft_new_card_in(board)` so drafts are taggable/accessible under S2 board-label membership.
+- Commit: `269481924` — bead export (`.beads/issues.jsonl`) after closing `fizzy-edq.7` (auto-closed epic `fizzy-edq`).
+
+Local verification (green, under mise Ruby):
+- `bin/rails test test/controllers/cards_controller_test.rb`
