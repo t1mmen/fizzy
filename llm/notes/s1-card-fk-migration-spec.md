@@ -268,23 +268,24 @@ bd graph fizzy-669      # render dependency DAG
 > **Q-S-S1-001 — Should `comments.id` mirror Beads `comments.id` directly, or use a separate Fizzy id with a beads_comment_id column?**
 > §B.1 row 8 picks the former (mirror id directly) for consistency with Card. Spec round S6 (Rich text + comments) may revisit if it complicates rich-text storage.
 
-> **Q-S-S1-002 — Do we keep `closures` for any reason (e.g., Fizzy-only audit not in Beads events)?**
-> §B.4 picks "drop"; if a downstream UX requirement surfaces a need (e.g., "close reason field" beyond what Beads supports), reopen.
+> **Q-S-S1-002 — DECIDED IN v2: closures + taggings KEPT per P9 mirror doctrine.**
+> v1 of this spec proposed dropping; Codex S1 review caught the conflict with P9 §C.2 (Closure.upsert_all on close events) and §B.2 (Filter/Search uses Fizzy-side taggings joins). v2 corrected: both tables stay + widen FK column. Whether they get dropped in v2+ as a separate cleanup (after a richer Card.beads_status mirror replaces them) is a future spec round, NOT a V1 question.
 
 ---
 
-## §L — Validation checklist (pre-lock)
+## §L — Validation checklist (v2 — locked)
 
-- [ ] §A-§G drafted with concrete migrations
-- [ ] §B enumerates every affected table from P1 §A FK list (cross-checked)
-- [ ] §C polymorphic handling explicit
-- [ ] §D rollback documented
-- [ ] §E verification tests defined
-- [ ] §F beads_status column migration sketched
-- [ ] §H child bead inventory listed (22 steps)
-- [ ] §I child beads minted via `bd create` (22 actual fizzy-XXX ids)
-- [ ] All child beads `parent-child` to fizzy-669; `blocks` deps wired per §A.2 ordering
-- [ ] Ratified 3-of-3 by `[S1: agreed]`
+- [x] §A-§G drafted with concrete migrations
+- [x] §B enumerates every affected table from P1 §A FK list — cross-checked + storage_entries added per Gemini v2 catch
+- [x] §C polymorphic handling explicit
+- [x] §D rollback documented (v2: closures + taggings KEPT not dropped)
+- [x] §E verification tests defined
+- [x] §F beads_status column migration sketched
+- [x] §H child bead inventory listed (23 steps in v2)
+- [x] §I child beads minted via `bd create` (23 actual fizzy-XXX ids)
+- [x] All child beads `parent-child` to fizzy-669; `blocks` deps wired per §A.2 ordering
+- [x] v2 corrections applied per Codex S1 round 2 (closures+taggings keep, comments.id NOT widen, search_records widen both, F.18b storage_entries added)
+- [ ] Ratified 3-of-3 by `[S1: agreed]` (Gemini ratified v2; Codex pending)
 
 ---
 
