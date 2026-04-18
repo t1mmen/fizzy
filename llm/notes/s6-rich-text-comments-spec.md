@@ -183,6 +183,8 @@ The mirror row in MySQL `comments` must be:
 - `comments.created_at = beads_comment.created_at`
 - `comments.updated_at = beads_comment.created_at` (Beads has no updated_at)
 
+**Caveat (expected in V1)**: if the author email cannot be mapped to a `User` (e.g., missing identity row), `creator_id` will fall back to the SystemActor user and therefore may “lie” about authorship. The canonical author remains `beads_comment.author`, preserved in Beads and available for admin/debugging.
+
 Write posture: **callback-bypass** (S5 §B.3 / P9 mirror doctrine):
 - Use `Comment.upsert_all` keyed by primary id.
 - Do not invoke `Comment.create!` in the poller (would trigger Searchable/Mentions/Storage callbacks).
@@ -265,7 +267,7 @@ In the fork, Beads stores plaintext only, so mentions must be derived from plain
 ### F.2 V1 decision: parse plaintext `@` tokens
 
 Mention tokens in plaintext:
-- Primary supported form: `@email@example.com` (unambiguous).
+- Primary supported form: `@user@example.com` (i.e., a full email address; unambiguous).
 - Optional supported form (best-effort): `@handle` where handle matches exactly one `User#mentionable_handles` entry.
 
 ### F.3 Implementation shape (I-S6)
@@ -339,7 +341,7 @@ Child beads (I-S6 implementation tasks) are minted under epic `fizzy-edq`.
 
 | F.N | Bead | Title | Satisfies | Key dependencies |
 |---|---|---|---|---|
-| F.1 | `fizzy-edq.1` | Migrate comments.id uuid→varchar(255) (use Beads comment id) | §B.3 | `fizzy-0b8`, `fizzy-jzw`, `fizzy-33r`, `fizzy-hrf`, `fizzy-2ae`, `fizzy-n9l` |
+| F.1 | `fizzy-edq.1` | Migrate comments.id uuid→varchar(255) (use Beads comment id) | §B.3 | `fizzy-0b8`, `fizzy-jzw` |
 | F.2 | `fizzy-edq.2` | Add CommandClient#add_comment (bd comments add --author --file --json) | §C | `fizzy-5jt`, `fizzy-r4v` |
 | F.3 | `fizzy-edq.3` | Add CommandClient#update_description (bd update --body-file) | §C, §G | `fizzy-5jt`, `fizzy-r4v` |
 | F.4 | `fizzy-edq.4` | Implement ActionText→Beads plaintext serializer (Card.description + Comment.body) | §E.2, §G | none |
@@ -362,17 +364,3 @@ Child beads (I-S6 implementation tasks) are minted under epic `fizzy-edq`.
 - [x] §J child beads minted and dependency graph wired (fizzy-edq.1..11)
 - [ ] `[CODEX→CLAUDE S6 v1 ready]` sent + peer review complete
 - [ ] `[FROM→TO S6: agreed]` 3-of-3 lock
-
-## §E — Cards::CommentsController rewire + optimistic UI posture
-
-## §F — Mention parsing pipeline (poller-side; supports direct bd writes)
-
-## §G — Card description edit flow (UI → Beads plaintext → derived ActionText cache)
-
-## §H — Test strategy (unit + integration; poller tests deferred to S9)
-
-## §I — Open questions / deferrals
-
-## §J — Child bead inventory (maps each AC to an impl bead)
-
-## §K — Validation checklist
