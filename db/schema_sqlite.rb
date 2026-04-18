@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.2].define(version: 2026_04_18_070000) do
+ActiveRecord::Schema[8.2].define(version: 2026_04_18_074500) do
   create_table "accesses", id: :uuid, force: :cascade do |t|
     t.datetime "accessed_at"
     t.uuid "account_id", null: false
@@ -290,7 +290,7 @@ ActiveRecord::Schema[8.2].define(version: 2026_04_18_070000) do
     t.index ["board_id"], name: "index_columns_on_board_id"
   end
 
-  create_table "comments", id: :uuid, force: :cascade do |t|
+  create_table "comments", id: { type: :string, limit: 255 }, force: :cascade do |t|
     t.uuid "account_id", null: false
     t.string "card_id", limit: 255, null: false
     t.datetime "created_at", null: false
