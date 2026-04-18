@@ -48,7 +48,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "create resumes existing draft if it exists" do
-    draft = boards(:writebook).cards.create!(creator: users(:kevin), status: :drafted)
+    draft = users(:kevin).draft_new_card_in(boards(:writebook))
 
     assert_no_difference -> { Card.count } do
       post board_cards_path(boards(:writebook))
@@ -57,7 +57,7 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "show redirects to draft when card is drafted" do
-    card = boards(:writebook).cards.create!(creator: users(:kevin), status: :drafted)
+    card = users(:kevin).draft_new_card_in(boards(:writebook))
 
     get card_path(card)
     assert_redirected_to card_draft_path(card)
@@ -111,8 +111,37 @@ class CardsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Something more in-depth", card.description.to_plain_text.strip
   end
 
+  test "update rewires description to Beads for mirrored cards" do
+    board = boards(:writebook)
+    card = Current.set(account: board.account, session: sessions(:kevin), user: users(:kevin)) do
+      Card.create!(
+        id: "fizzy-edq7-desc",
+        number: 99,
+        board: board,
+        creator: users(:kevin),
+        account: board.account,
+        status: :published,
+        beads_status: "open",
+        last_active_at: Time.current,
+        title: "Mirrored card"
+      )
+    end
+
+    # S2: Board membership is label-based.
+    Tagging.create!(account: card.account, card: card, tag: tags(:writebook_board_membership))
+
+    client = mock("command_client")
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+    client.expects(:update_description).with(card.id, "New Beads plaintext")
+
+    patch card_path(card), as: :turbo_stream, params: { card: { description: "New Beads plaintext" } }
+    assert_response :success
+
+    assert_equal "New Beads plaintext", card.reload.description.to_plain_text.strip
+  end
+
   test "update draft card does not render reactions" do
-    draft = boards(:writebook).cards.create!(creator: users(:kevin), status: :drafted)
+    draft = users(:kevin).draft_new_card_in(boards(:writebook))
 
     patch card_path(draft), as: :turbo_stream, params: {
       card: { image: fixture_file_upload("moon.jpg", "image/jpeg") }

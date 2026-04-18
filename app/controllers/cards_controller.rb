@@ -20,7 +20,8 @@ class CardsController < ApplicationController
       end
 
       format.json do
-        @card = @board.cards.create! card_params.merge(creator: Current.user, status: "published")
+        @card = Card.create! card_params.merge(board: @board, creator: Current.user, status: "published")
+        ensure_board_membership_tagging!(@card)
         render :show, status: :created, location: card_path(@card, format: :json)
       end
     end
@@ -33,7 +34,15 @@ class CardsController < ApplicationController
   end
 
   def update
-    @card.update! card_params
+    if mirrored? && card_params.key?(:description)
+      description_input = card_params[:description]
+      other_attributes = card_params.except(:description)
+
+      @card.update!(other_attributes) if other_attributes.to_h.any?
+      update_description_via_beads(description_input)
+    else
+      @card.update! card_params
+    end
 
     respond_to do |format|
       format.turbo_stream
@@ -69,5 +78,60 @@ class CardsController < ApplicationController
 
     def card_params
       params.expect(card: [ :title, :description, :image, :created_at, :last_active_at ])
+    end
+
+    def mirrored?
+      @card.id.to_s.start_with?("fizzy-")
+    end
+
+    def ensure_board_membership_tagging!(card)
+      tag = Tag.find_or_create_by!(account_id: card.account_id, title: card.board.membership_label)
+      Tagging.find_or_create_by!(account_id: card.account_id, card_id: card.id, tag_id: tag.id)
+    end
+
+    def update_description_via_beads(description_input)
+      plaintext = Fizzy::Beads::ActionTextToPlaintext.call(description_input)
+      Fizzy::Beads::CommandClient.current.update_description(@card.id, plaintext)
+
+      html = Fizzy::Beads::PlaintextToActionTextHtml.call(plaintext)
+      upsert_action_text_description(html)
+
+      # Keep the mirror search index consistent immediately (poller will reconcile).
+      search_record_class = Search::Record.for(@card.account_id)
+      search_record_class.upsert!(
+        account_id: @card.account_id,
+        searchable_type: "Card",
+        searchable_id: @card.id,
+        card_id: @card.id,
+        board_id: @card.board_id,
+        title: @card.title.to_s,
+        content: plaintext.to_s,
+        created_at: @card.created_at || Time.current
+      )
+
+      @card.update_columns(last_active_at: Time.current, updated_at: Time.current)
+    end
+
+    def upsert_action_text_description(html)
+      existing = ActionText::RichText.find_by(record_type: "Card", record_id: @card.id, name: "description")
+      id = existing&.id || ActiveRecord::Type::Uuid.generate
+      created_at = existing&.created_at || Time.current
+      now = Time.current
+
+      ActionText::RichText.upsert_all(
+        [
+          {
+            id: id,
+            account_id: @card.account_id,
+            record_type: "Card",
+            record_id: @card.id,
+            name: "description",
+            body: html.to_s,
+            created_at: created_at,
+            updated_at: now
+          }
+        ],
+        unique_by: [ :record_type, :record_id, :name ]
+      )
     end
 end
