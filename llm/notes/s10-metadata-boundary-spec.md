@@ -83,11 +83,13 @@ Rules:
 - Keys must be **stable** and **migration-friendly** (treat as public API for the fork).
 - Values should be JSON scalars/objects (no large blobs).
 
-Initial registry (from S1–S9):
+Initial registry (audited from S1–S9 by fizzy-e5m.6, 2026-04-17):
 
-| Key | Meaning | Written by | Read by | Notes |
-|---|---|---|---|---|
-| `metadata.fizzy.prior_status` | prior Beads status used to reopen/restore (S4) | CommandClient in UI restore/close flows | poller + any admin/debug | Rarely queried; ideal for metadata |
+| Key | Meaning | Written by | Read by | Validation | Mirrored to MySQL? |
+|---|---|---|---|---|---|
+| `metadata.fizzy.prior_status` | prior Beads status used to reopen/restore (S4 §F.2) | `CommandClient#update_prior_status` (called from UI close/defer flows before the explicit subcommand) | `CommandClient#read_issue` on reopen/undefer (S4 §A.2 + §F.2) | None — internal-only; controllers never accept user-input metadata writes | Yes — entire `metadata.fizzy` bucket mirrored to `cards.beads_metadata` JSON column on each S9 poller tick (REPLACE semantics per fizzy-e5m.1) |
+
+**Stack additions tracked:** any future S-round that introduces a new `metadata.fizzy.*` key MUST add a row here with the same five columns. The `cards.beads_metadata` mirror column does NOT need a schema change to accommodate new keys (JSON type).
 
 ### B.2 `fizzy/*` label namespace (Beads)
 
@@ -97,12 +99,15 @@ Rules:
 - UI must reject users attempting to create/update/delete labels in reserved namespace (S5).
 - Poller must still mirror reserved labels into MySQL Tag/Tagging to support UI projections (boards/columns) even though UI cannot create them.
 
-Initial registry:
+Initial registry (audited from S1–S9 by fizzy-e5m.6, 2026-04-17):
 
-| Prefix / pattern | Meaning | Written by | Mirrored to MySQL? | Notes |
-|---|---|---:|---:|---|
-| `fizzy/board/<uuid>` | board membership label (S2) | system-only | yes (Tag/Tagging) | single-board invariant enforced by S9 |
-| `fizzy/system/*` (reserved) | future system labels | system-only | yes | placeholder for expansion |
+| Prefix / pattern | Meaning | Written by | Mirrored to MySQL? | UI validation | Notes |
+|---|---|---|---|---|---|
+| `fizzy/board/<uuid>` | board membership label (S2 §A.2 + S5 §D.1) | `CommandClient#_add_system_label` / `_remove_system_label` (system-only path; controllers must use `Board#membership_label` constant) | Yes (`tags`+`taggings` mirror via S9 poller §C.3) | `Cards::TaggingsController` rejects user-typed labels matching `Fizzy::Beads::ReservedNamespace.violates?` (= `^fizzy/`) — 422 before CommandClient is invoked | Single-board invariant enforced by S9 §G.2 + S2 controller layer |
+| `fizzy/system/*` (reserved) | future system labels | system-only | yes | rejected at controller (same regex) | Placeholder; no current writers |
+| `fizzy/test/*` (reserved) | test fixtures' temp labels | test setup only | yes | rejected at controller (same regex) | Placeholder; no current writers |
+
+**Stack additions tracked:** any future S-round that introduces a new reserved-prefix label MUST add a row here. Reserved prefixes ALL match `\Afizzy/`i — that single regex (codified in `Fizzy::Beads::ReservedNamespace::RESERVED_PREFIX_RE`) is the one place namespace policy lives.
 
 ---
 
