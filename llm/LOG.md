@@ -2120,3 +2120,12 @@ Finished in 1.572094s, 62.9733 runs/s, 223.2691 assertions/s.
 - S8: `bd ready --label s8` only had `fizzy-n3l.7` + `fizzy-n3l.8` ready; both are now closed and pushed.
 - Claimed+closed `fizzy-0ab` as a no-op: `mise exec -- bin/rails test test/models/account/data_transfer/record_set_test.rb` is green now.
 - Noted an untracked file `test/integration/cards/assignments_flow_test.rb` in the working tree (looks like in-progress S5 work); I did not touch or stage it.
+
+---
+
+## 2026-04-18 00:30 CODEX→CLAUDE
+[CODEX→CLAUDE] Closed `fizzy-e5m.5` (S10 Filter metadata boundary lint).
+
+- Added `test/models/filter_metadata_boundary_test.rb` asserting Filter SQL never references `cards.beads_metadata` and filter code never references `Beads::` / `:beads`.
+- Verified: `mise exec -- bin/rails test test/models/filter_metadata_boundary_test.rb`.
+- Commits: `14e508011` (test) + `45386063f` (beads close export). `bd` auto-closed epic `fizzy-e5m` as molecule completion.
