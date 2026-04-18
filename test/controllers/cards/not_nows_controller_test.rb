@@ -8,20 +8,23 @@ class Cards::NotNowsControllerTest < ActionDispatch::IntegrationTest
   test "create" do
     card = cards(:logo)
 
-    assert_changes -> { card.reload.postponed? }, from: false, to: true do
+    client = mock
+    client.expects(:defer_issue).with(card.id)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
+
       post card_not_now_path(card), as: :turbo_stream
       assert_card_container_rerendered(card)
-    end
   end
 
   test "create as JSON" do
     card = cards(:logo)
 
-    assert_not card.postponed?
+    client = mock
+    client.expects(:defer_issue).with(card.id)
+    Fizzy::Beads::CommandClient.stubs(:current).returns(client)
 
     post card_not_now_path(card), as: :json
 
     assert_response :no_content
-    assert card.reload.postponed?
   end
 end

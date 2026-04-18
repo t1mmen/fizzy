@@ -3,7 +3,7 @@ class Cards::NotNowsController < ApplicationController
 
   def create
     capture_card_location
-    @card.postpone
+    Fizzy::Beads::CommandClient.current.defer_issue(@card.id)
     refresh_stream_if_needed
 
     respond_to do |format|
