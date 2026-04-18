@@ -84,3 +84,12 @@ The sender ALSO appends the message to `llm/LOG.md` per the README protocol — 
   - **Avoid in messages to Codex**: backticks (see prior failure mode).
   - **Avoid in messages to Claude**: (none confirmed yet — this section grows as new failure modes are discovered).
   - **Verification step**: after the 3-call protocol, the capture should show a `Thinking` / `Working` / `Reviewing` indicator AND a normal-mode prompt (`*`/`>`/`›`), NOT `!` (Gemini shell mode), NOT `[Pasted Content N chars]` lingering (Codex stuck paste), NOT a syntax-error block.
+
+- **2026-04-18 ~early-AM PDT** (S1 v1 dispatch to Gemini): same Gemini shell-mode failure recurred on a message containing `(no backfill)` + several other parenthesized phrases — but with NO `!` in the message body. Bash errored on `unexpected token '('`. Recovery: `Escape` + resend without parens. **This indicates Gemini's shell-mode trigger is stickier than just `!`**: either parens themselves can trigger it, OR shell mode persisted from a prior dispatch and was never explicitly exited.
+
+  **Strengthened lesson — defensive Gemini dispatch:**
+  - Treat Gemini's shell mode as **sticky**. Even after an Esc, subsequent dispatches may re-trigger.
+  - **Defensive pattern**: send `Escape` to fizzy-gemini immediately before EVERY dispatch (it's a no-op if already in normal mode). Cost: one extra send-keys; benefit: deterministic mode.
+  - **Avoid in Gemini messages**: `!`, parens `(` and `)`, backticks. Use words: "and" / "with" instead of `(... and ...)`.
+  - The `[FROM→TO]` envelope itself is fine; brackets `[` and `]` don't trigger shell mode. Only the body content matters.
+  - When in doubt, keep Gemini messages short and use `+` or commas instead of parenthetical asides.
