@@ -1,5 +1,5 @@
 class Current < ActiveSupport::CurrentAttributes
-  attribute :session, :user, :identity, :account
+  attribute :session, :user, :identity, :account, :actor
   attribute :http_method, :request_id, :user_agent, :ip_address, :referrer
 
   def session=(value)
@@ -14,7 +14,10 @@ class Current < ActiveSupport::CurrentAttributes
     super(identity)
 
     if identity.present?
+      self.actor = identity.email_address
       self.user = identity.users.find_by(account: account)
+    else
+      self.actor = nil
     end
   end
 
