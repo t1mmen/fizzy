@@ -21,6 +21,7 @@ layout:
   title: Layout is broken
   created_at: <%= 1.week.ago %>
   status: published
+  beads_status: in_progress
   last_active_at: <%= 1.week.ago %>
   account: 37s_uuid
 

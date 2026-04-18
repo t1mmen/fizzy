@@ -7,14 +7,15 @@ class Columns::Cards::Drops::ClosuresControllerTest < ActionDispatch::Integratio
 
   test "create" do
     card = cards(:logo)
+    actor = users(:kevin).identity.email_address
 
     status = stub(success?: true, exitstatus: 0)
     seq = sequence("bd")
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "update", card.id.to_s, "--metadata", regexp_matches(/prior_status/))
+      .with("bd", "--actor", actor, "update", card.id.to_s, "--metadata", regexp_matches(/prior_status/))
       .returns(["", "", status]).in_sequence(seq)
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "close", card.id.to_s)
+      .with("bd", "--actor", actor, "close", card.id.to_s)
       .returns(["", "", status]).in_sequence(seq)
 
     assert_changes -> { card.reload.closed? }, from: false, to: true do

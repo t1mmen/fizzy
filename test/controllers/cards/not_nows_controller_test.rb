@@ -7,14 +7,15 @@ class Cards::NotNowsControllerTest < ActionDispatch::IntegrationTest
 
   test "create" do
     card = cards(:logo)
+    actor = users(:kevin).identity.email_address
 
     status = stub(success?: true, exitstatus: 0)
     seq = sequence("bd")
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "update", card.id.to_s, "--metadata", regexp_matches(/prior_status/))
+      .with("bd", "--actor", actor, "update", card.id.to_s, "--metadata", regexp_matches(/prior_status/))
       .returns(["", "", status]).in_sequence(seq)
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "defer", card.id.to_s)
+      .with("bd", "--actor", actor, "defer", card.id.to_s)
       .returns(["", "", status]).in_sequence(seq)
 
       post card_not_now_path(card), as: :turbo_stream
@@ -23,14 +24,15 @@ class Cards::NotNowsControllerTest < ActionDispatch::IntegrationTest
 
   test "create as JSON" do
     card = cards(:logo)
+    actor = users(:kevin).identity.email_address
 
     status = stub(success?: true, exitstatus: 0)
     seq = sequence("bd")
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "update", card.id.to_s, "--metadata", regexp_matches(/prior_status/))
+      .with("bd", "--actor", actor, "update", card.id.to_s, "--metadata", regexp_matches(/prior_status/))
       .returns(["", "", status]).in_sequence(seq)
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "defer", card.id.to_s)
+      .with("bd", "--actor", actor, "defer", card.id.to_s)
       .returns(["", "", status]).in_sequence(seq)
 
     post card_not_now_path(card), as: :json
@@ -41,17 +43,18 @@ class Cards::NotNowsControllerTest < ActionDispatch::IntegrationTest
   test "destroy" do
     card = cards(:logo)
     card.update_columns(defer_until: 1.day.from_now, updated_at: Time.current)
+    actor = users(:kevin).identity.email_address
 
     status = stub(success?: true, exitstatus: 0)
     seq = sequence("bd")
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "--json", "show", card.id.to_s)
+      .with("bd", "--actor", actor, "--json", "show", card.id.to_s)
       .returns([JSON.dump({ metadata: { fizzy: { prior_status: "in_progress" } } }), "", status]).in_sequence(seq)
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "undefer", card.id.to_s)
+      .with("bd", "--actor", actor, "undefer", card.id.to_s)
       .returns(["", "", status]).in_sequence(seq)
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "update", card.id.to_s, "--status", "in_progress")
+      .with("bd", "--actor", actor, "update", card.id.to_s, "--status", "in_progress")
       .returns(["", "", status]).in_sequence(seq)
 
     delete card_not_now_path(card), as: :turbo_stream
@@ -64,17 +67,18 @@ class Cards::NotNowsControllerTest < ActionDispatch::IntegrationTest
   test "destroy as JSON" do
     card = cards(:logo)
     card.update_columns(defer_until: 1.day.from_now, updated_at: Time.current)
+    actor = users(:kevin).identity.email_address
 
     status = stub(success?: true, exitstatus: 0)
     seq = sequence("bd")
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "--json", "show", card.id.to_s)
+      .with("bd", "--actor", actor, "--json", "show", card.id.to_s)
       .returns([JSON.dump({ metadata: { fizzy: { prior_status: "open" } } }), "", status]).in_sequence(seq)
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "undefer", card.id.to_s)
+      .with("bd", "--actor", actor, "undefer", card.id.to_s)
       .returns(["", "", status]).in_sequence(seq)
     Open3.expects(:capture3)
-      .with("bd", "--actor", "kevin@example.com", "update", card.id.to_s, "--status", "open")
+      .with("bd", "--actor", actor, "update", card.id.to_s, "--status", "open")
       .returns(["", "", status]).in_sequence(seq)
 
     delete card_not_now_path(card), as: :json
