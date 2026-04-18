@@ -38,4 +38,29 @@ class Account::SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_equal Current.account.cards_count, @response.parsed_body["cards_count"]
     assert_equal Current.account.entropy.auto_postpone_period_in_days, @response.parsed_body["auto_postpone_period_in_days"]
   end
+
+  # S7 §E.4 (fizzy-8jc): storage settings panel — read-only data path.
+
+  test "show renders storage progress bar with current/total bytes" do
+    get account_settings_path
+
+    assert_response :success
+    assert_select "[data-test='storage-summary']" do
+      assert_select "progress[data-test='storage-progress']" do |elements|
+        bar = elements.first
+        assert_equal Current.account.bytes_used.to_s, bar["value"]
+        assert_equal Current.account.storage_quota_bytes.to_s, bar["max"]
+      end
+    end
+  end
+
+  test "show emits warn-state class when over warn threshold" do
+    Account.any_instance.stubs(:bytes_used).returns(Current.account.storage_warn_bytes + 1)
+
+    get account_settings_path
+
+    assert_response :success
+    assert_select "[data-test='storage-warn']"
+    assert_select ".storage-progress--warn"
+  end
 end

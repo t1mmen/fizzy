@@ -6,7 +6,10 @@ class Account::SettingsController < ApplicationController
 
   def show
     respond_to do |format|
-      format.html { @users = @account.users.active.alphabetically.includes(:identity) }
+      format.html do
+        @users = @account.users.active.alphabetically.includes(:identity)
+        load_storage_summary
+      end
       format.json
     end
   end
@@ -27,5 +30,17 @@ class Account::SettingsController < ApplicationController
 
     def account_params
       params.expect account: %i[ name ]
+    end
+
+    # S7 §E.4 (fizzy-8jc): read-only storage summary for the settings page —
+    # current bytes, quota cap, warn threshold, plus per-board breakdown so
+    # admins can see "what's using my storage".
+    def load_storage_summary
+      @storage_usage_bytes      = @account.bytes_used
+      @storage_quota_bytes      = @account.storage_quota_bytes
+      @storage_warn_bytes       = @account.storage_warn_bytes
+      @storage_quota_warning    = @account.storage_quota_warning?
+      @storage_per_board        = @account.boards.includes(:storage_total).map { |b| [ b, b.bytes_used ] }
+                                                  .sort_by { |_, bytes| -bytes }
     end
 end

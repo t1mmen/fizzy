@@ -1,0 +1,33 @@
+<div class="settings__row" data-test="storage-summary">
+  <h2 class="settings__title">Storage</h2>
+
+  <p class="txt-small color-light-mid">
+    Using <strong><%= number_to_human_size @storage_usage_bytes %></strong>
+    of <strong><%= number_to_human_size @storage_quota_bytes %></strong>
+    <% if @storage_quota_warning %>
+      <span class="badge badge--warn" data-test="storage-warn">approaching limit</span>
+    <% end %>
+  </p>
+
+  <% percent = @storage_quota_bytes.positive? ? ((@storage_usage_bytes.to_f / @storage_quota_bytes) * 100).clamp(0, 100) : 0 %>
+  <progress class="storage-progress <%= 'storage-progress--warn' if @storage_quota_warning %>"
+            value="<%= @storage_usage_bytes %>"
+            max="<%= @storage_quota_bytes %>"
+            data-test="storage-progress"
+            data-percent="<%= percent.round(1) %>">
+    <%= percent.round(1) %>%
+  </progress>
+
+  <% if @storage_per_board.any? { |_, bytes| bytes.positive? } %>
+    <h3 class="txt-small margin-block-start-half">By board</h3>
+    <ul class="settings__list" data-test="storage-per-board">
+      <% @storage_per_board.each do |board, bytes| %>
+        <% next if bytes.zero? %>
+        <li>
+          <span><%= board.name %></span>
+          <span class="color-light-mid"><%= number_to_human_size bytes %></span>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+</div>
