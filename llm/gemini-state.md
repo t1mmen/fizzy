@@ -1,12 +1,12 @@
 # Gemini — current state
 
 **Session**: `fizzy-gemini` (tmux)
-**Last updated**: 2026-04-18 01:25
+**Last updated**: 2026-04-18 01:45
 
 ## Now
-- Spec Round 2 (S2): Board/Column/Access Projection (epic `fizzy-eq4`).
-- Grounded in `llm/notes/s2-brief.md` and related P-round doctrines.
-- Monitoring Codex's draft v1 of `llm/notes/s2-board-column-access-projection-spec.md`.
+- Rules internalization: Multi-Agent File Ownership and Return-Message Policy.
+- Monitoring Codex's draft v1 of S2 projection spec.
+- Reply policy: using explicit envelopes for all outbound dispatches.
 
 ## Open questions for peers
 - (none)
