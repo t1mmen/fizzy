@@ -64,7 +64,7 @@ We introduce a single, unique “Beads-origin correlation id” stored in MySQL:
 
 - New column: `events.beads_event_id` (varchar)
 - Format:
-  - For Beads `events` rows: `event:<beads_events.id>`
+  - For Beads `events` rows: `event:<beads_events.id>` (optionally with a suffix when **one** Beads event maps to **multiple** Fizzy Events, e.g. reassignment: `event:<id>:unassign` and `event:<id>:assign`)
   - For Beads `comments` rows: `comment:<beads_comments.id>`
 
 This provides a single unique key for idempotency + loop avoidance across both canonical sources.
@@ -89,6 +89,7 @@ All mirrored Fizzy `Event` rows are created with:
 | Beads `events` | updated snapshot shows title change | `card_title_changed` | `Card` | nested payload (`old_title`, `new_title`) |
 | Beads `events` | updated snapshot shows assignee nil→value | `card_assigned` | `Card` | `assignee_ids` |
 | Beads `events` | updated snapshot shows assignee value→nil | `card_unassigned` | `Card` | `assignee_ids` |
+| Beads `events` | updated snapshot shows assignee value(A)→value(B) | **two** events: `card_unassigned` then `card_assigned` | `Card` | `assignee_ids` (first A then B) |
 | Beads `events` | label_added/removal changes a `fizzy/board/*` label | `card_board_changed` | `Card` | nested payload (`old_board`, `new_board`) |
 | Beads `events` | derived column moves nil→col | `card_triaged` | `Card` | nested payload (`column`) |
 | Beads `events` | derived column moves col→nil | `card_sent_back_to_triage` | `Card` | `{}` |
@@ -139,6 +140,7 @@ Implementation must add:
 
 Dedup rule:
 - poller **must never** `destroy` or “edit” an existing Event; it should only create missing rows and then stop.
+- when one Beads event maps to multiple Fizzy Events (e.g. reassignment), the mapper must assign **distinct** `beads_event_id` values via a suffix (see §A.3) so each derived Event row can still be deduped independently.
 
 ### B.3 Actor/author mapping (creator attribution)
 
@@ -163,7 +165,15 @@ Important code path:
 
 This conflicts with the mirror doctrine (poller writes bypass callbacks).
 
-I-S8 must therefore modify `Card::Eventable#touch_last_active_at` to avoid callback-driven writes (use `update_columns`/`update_all`) so poller-created Event rows do not cascade unwanted side effects.
+I-S8 must therefore avoid callback-driven writes when **poller-originated** Event creation triggers `touch_last_active_at`.
+
+Decision (minimize ripple vs upstream semantics):
+- Keep existing callback semantics for **normal interactive writes** (non-poller), unless and until the fork removes the upstream “activity spike” feature (which currently depends on `last_active_at_changed?` callbacks).
+- Add an explicit “mirror mode” context signal (e.g. `Current.beads_mirror?`), and implement:
+  - if `Current.beads_mirror?` is true: `touch_last_active_at` uses callback-bypass update (`update_columns`/`update_all`)
+  - else: preserve current behavior (use `update!`) to avoid unintentional behavior changes for non-poller paths
+
+The poller (S9) and any mirror-only code paths must set this context around `Event.create!` (and other mirror writes) so the “mirror mode” branch is taken.
 
 ### B.5 “Exactly once” side effects on retries
 
@@ -336,11 +346,11 @@ Beads (children of `fizzy-n3l`):
 
 ## §J — Validation checklist
 
-- [ ] §A mapping table covers ActivitiesController actions; particulars shapes match `Event::Particulars`.
-- [ ] §B dedup strategy is DB-backed and works for both Beads events and Beads comments.
-- [ ] §C board scoping requirement stated clearly (access control depends on it).
-- [ ] §D outbound webhooks posture reuses existing pipeline; no double-fire.
-- [ ] §E inbound webhooks explicitly deferred.
-- [ ] §F notifications + mentions cross-linked and ordering constraints stated.
-- [ ] §G tests cover mapping + dedup + side effects.
-- [ ] Child beads (8–12) minted under `fizzy-n3l` with correct deps (S3/S4/S5/S6/S9).
+- [x] §A mapping table covers ActivitiesController actions; particulars shapes match `Event::Particulars`.
+- [x] §B dedup strategy is DB-backed and works for both Beads events and Beads comments.
+- [x] §C board scoping requirement stated clearly (access control depends on it).
+- [x] §D outbound webhooks posture reuses existing pipeline; no double-fire.
+- [x] §E inbound webhooks explicitly deferred.
+- [x] §F notifications + mentions cross-linked and ordering constraints stated.
+- [x] §G tests cover mapping + dedup + side effects.
+- [x] Child beads (8–12) minted under `fizzy-n3l` with correct deps (S3/S4/S5/S6/S9).
